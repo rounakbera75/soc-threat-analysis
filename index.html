@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentinelX | Autonomous AI Threat Intelligence & Next-Gen SIEM</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Leaflet.js CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- CSS Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Standalone Tab Navigation & View Styles */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .tab-content.active-tab {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .canvas-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 400;
+        }
+        .soar-step-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 18px;
+            background: #0d1527;
+            border: 1px solid #1a2744;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        .soar-step-item.step-complete {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.08);
+        }
+        .soar-step-item.step-running {
+            border-color: #38bdf8;
+            background: rgba(56, 189, 248, 0.08);
+        }
+        .sim-btn-active {
+            border-color: #38bdf8 !important;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+        }
+        .status-badge-open { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+        .status-badge-investigating { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid #f59e0b; }
+        .status-badge-contained { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #38bdf8; }
+        .status-badge-resolved { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; }
+        @media print {
+            .sidebar, header, .no-print { display: none !important; }
+            .main { margin-left: 0 !important; padding: 0 !important; width: 100% !important; }
+            body { background: white !important; color: black !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR NAVIGATION -->
+<div class="sidebar">
+    <h2>🛡 SentinelX</h2>
+    <p>Autonomous SIEM & AI Threat Intel</p>
+    
+    <a href="#dashboard" class="nav active" onclick="switchTab('dashboard', event)">📊 SOC Dashboard</a>
+    <a href="#threat-map" class="nav" onclick="switchTab('threat-map', event)">🌍 Live Attack Map</a>
+    <a href="#ai-detector" class="nav" onclick="switchTab('ai-detector', event)">🔍 AI Threat Detector</a>
+    <a href="#ai-models" class="nav" onclick="switchTab('ai-models', event)">🤖 Dual AI Suite & XAI</a>
+    <a href="#mitre" class="nav" onclick="switchTab('mitre', event)">🎯 MITRE ATT&CK Matrix</a>
+    <a href="#soar" class="nav" onclick="switchTab('soar', event)">⚡ SOAR Playbooks</a>
+    <a href="#recon" class="nav" onclick="switchTab('recon', event)">🌐 OSINT Recon Scanner</a>
+    <a href="#simulate" class="nav" onclick="switchTab('simulate', event)">💥 Attack Simulator</a>
+    <a href="#firewall" class="nav" onclick="switchTab('firewall', event)">🛡️ Active Firewall</a>
+    <a href="#logs" class="nav" onclick="switchTab('logs', event)">📋 Security Logs</a>
+    <a href="#reports" class="nav" onclick="switchTab('reports', event)">📑 Executive Reports</a>
+    <a href="#settings" class="nav" onclick="switchTab('settings', event)">⚙️ SIEM Settings</a>
+</div>
+
+<!-- MAIN CONTENT CONTAINER -->
+<div class="main">
+    <header class="no-print">
+        <div>
+            <h1 id="pageTitle">Security Operations Center & Threat Intelligence</h1>
+            <p id="pageSubTitle">Real-Time Telemetry, Dual Machine Learning Anomaly Detection, Global Geolocation & SOAR Containment</p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <div class="online">
+                ● SIEM ENGINE ONLINE
+            </div>
+            <a href="https://github.com/rounakbera75/soc-threat-analysis" target="_blank" class="btn-sm" style="background: #1e293b; border: 1px solid #334155; color: #f8fafc; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">
+                ⭐ GitHub Repo
+            </a>
+        </div>
+    </header>
+
+    <!-- ========================================== -->
+    <!-- TAB 1: SOC DASHBOARD -->
+    <!-- ========================================== -->
+    <div id="dashboard-tab" class="tab-content active-tab">
+        <!-- TOP KPI STATS -->
+        <div class="stats">
+            <div class="stat">
+                <span>SOC DEFENSE STATUS</span>
+                <strong class="low" id="kpiStatus">ACTIVE DEFENSE</strong>
+            </div>
+            <div class="stat">
+                <span>DUAL AI ML ENSEMBLE</span>
+                <strong style="color: #38bdf8;">ISOLATION FOREST + RF</strong>
+            </div>
+            <div class="stat">
+                <span>QUARANTINED IPS</span>
+                <strong class="high" id="kpiBlockedCount">4 HOSTS</strong>
+            </div>
+            <div class="stat">
+                <span>TELEMETRY INGRESS</span>
+                <strong id="kpiTotalEvents">1,842 EVENTS</strong>
+            </div>
+        </div>
+
+        <!-- GLOBAL ATTACK FLIGHT MAP -->
+        <section class="panel" style="position: relative;">
+            <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2>🌍 Real-Time Cyber Attack Origin & Ingress Map</h2>
+                    <p>Live 60 FPS Bézier attack flight paths connecting global threat actors to Ashburn SOC Gateway</p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="switchTab('threat-map')" class="btn-sm btn-report-sm" style="font-size: 12px; padding: 6px 14px; cursor: pointer;">
+                        🖵 Open Fullscreen Wallboard
+                    </button>
+                </div>
+            </div>
+
+            <div style="position: relative; height: 380px; width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid #1a2744;">
+                <div id="dashMap" style="height: 100%; width: 100%;"></div>
+                <canvas id="dashCanvas" class="canvas-overlay"></canvas>
+                <div style="position: absolute; top: 12px; left: 12px; z-index: 500; background: rgba(12, 20, 36, 0.9); border: 1px solid #1a2744; border-radius: 6px; padding: 6px 14px; font-size: 11px; font-weight: bold; color: #38bdf8;">
+                    🛡️ PRIMARY TARGET: ASHBURN SOC GATEWAY (DEFENSE LEVEL 5)
+                </div>
+            </div>
+
+            <!-- LIVE TICKER -->
+            <div style="margin-top: 15px; background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="badge high" style="font-size: 10px;">LIVE INGRESS</span>
+                    <span id="dashTickerText" style="color: #cbd5e1;">⚡ Intercepting ingress telemetry from 🇷🇺 Russia, 🇨🇳 China, 🇳🇱 Netherlands, 🇧🇷 Brazil & 🇩🇪 Germany...</span>
+                </div>
+                <span style="color: #10b981; font-weight: bold;">● 60 FPS FLIGHT ARCS</span>
+            </div>
+        </section>
+
+        <!-- TWO COLUMN ROW: RECENT THREATS & AI CHARTS -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 25px;">
+            <!-- CHART: THREAT SEVERITY BREAKDOWN -->
+            <section class="panel">
+                <div class="panel-title">
+                    <h2>📊 Threat Severity Distribution</h2>
+                    <p>Classification breakdown of analyzed telemetry logs</p>
+                </div>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="threatPieChart"></canvas>
+                </div>
+            </section>
+
+            <!-- CHART: INGRESS VOLUME HEATMAP -->
+            <section class="panel">
+                <div class="panel-title">
+                    <h2>⚡ Ingress Packet Anomaly Distribution</h2>
+                    <p>Network activity volume vs Machine Learning risk score</p>
+                </div>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="threatBarChart"></canvas>
+                </div>
+            </section>
+        </div>
+
+        <!-- QUICK ACCESS WORKFLOWS -->
+        <section class="panel" style="margin-top: 25px;">
+            <div class="panel-title">
+                <h2>⚡ SOC Rapid Response Actions</h2>
+                <p>1-Click operations for incident triage and threat containment</p>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                <button onclick="switchTab('ai-detector')" class="btn" style="background: #1e293b; border: 1px solid #38bdf8; color: #38bdf8; padding: 14px; text-align: center; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    🔍 Manual IP Threat Audit
+                </button>
+                <button onclick="switchTab('simulate')" class="btn" style="background: #1e293b; border: 1px solid #f59e0b; color: #f59e0b; padding: 14px; text-align: center; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    💥 Launch Attack Simulator
+                </button>
+                <button onclick="switchTab('soar')" class="btn" style="background: #1e293b; border: 1px solid #10b981; color: #10b981; padding: 14px; text-align: center; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    ⚡ Run SOAR Playbook
+                </button>
+                <button onclick="switchTab('reports')" class="btn" style="background: #1e293b; border: 1px solid #a855f7; color: #a855f7; padding: 14px; text-align: center; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    📑 Generate SIEM Report
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: LIVE THREAT MAP (FULLSCREEN WALLBOARD) -->
+    <!-- ========================================== -->
+    <div id="threat-map-tab" class="tab-content">
+        <section class="panel">
+            <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2>🌍 Fullscreen Global Attack Threat Wallboard</h2>
+                    <p>Real-time quadratic Bézier vector arcs, missile sparks, telemetry feed & origin nation ranking</p>
+                </div>
+                <button onclick="triggerRadarPing()" class="btn-sm" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                    📡 Broadcast Radar Ping
+                </button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 20px;">
+                <div style="position: relative; height: 550px; border-radius: 10px; overflow: hidden; border: 1px solid #1a2744;">
+                    <div id="wallboardMap" style="height: 100%; width: 100%;"></div>
+                    <canvas id="wallboardCanvas" class="canvas-overlay"></canvas>
+                </div>
+
+                <!-- RIGHT STREAM & TOP ATTACK ORIGINS -->
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
+                        <h3 style="font-size: 14px; color: #38bdf8; margin-bottom: 10px;">🏆 Top Threat Origins</h3>
+                        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+                            <div style="display: flex; justify-content: space-between;"><span>🇷🇺 Russia</span><strong class="high">482 attacks</strong></div>
+                            <div style="display: flex; justify-content: space-between;"><span>🇨🇳 China</span><strong class="high">394 attacks</strong></div>
+                            <div style="display: flex; justify-content: space-between;"><span>🇳🇱 Netherlands (Tor)</span><strong class="med">215 attacks</strong></div>
+                            <div style="display: flex; justify-content: space-between;"><span>🇧🇷 Brazil</span><strong class="med">180 attacks</strong></div>
+                            <div style="display: flex; justify-content: space-between;"><span>🇩🇪 Germany</span><strong class="low">112 attacks</strong></div>
+                        </div>
+                    </div>
+
+                    <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px; flex: 1; display: flex; flex-direction: column;">
+                        <h3 style="font-size: 14px; color: #38bdf8; margin-bottom: 10px;">⚡ Live Intercept Log</h3>
+                        <div id="wallboardLogStream" style="flex: 1; overflow-y: auto; font-family: monospace; font-size: 11px; display: flex; flex-direction: column; gap: 6px; max-height: 280px;">
+                            <!-- Dynamically generated logs -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: AI THREAT DETECTOR & RISK CALCULATOR -->
+    <!-- ========================================== -->
+    <div id="ai-detector-tab" class="tab-content">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 25px;">
+            <!-- INPUT FORM -->
+            <section class="panel">
+                <div class="panel-title">
+                    <h2>🔍 Ingress Telemetry Analyzer</h2>
+                    <p>Enter telemetry parameters to run live Machine Learning anomaly & threat vector classification</p>
+                </div>
+
+                <form id="threatAnalysisForm" onsubmit="runThreatAnalysis(event)">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">SOURCE IP ADDRESS</label>
+                        <input type="text" id="inputIp" value="192.168.1.52" required style="width: 100%; padding: 10px 14px; background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; color: #f8fafc; font-family: monospace;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div class="form-group">
+                            <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">FAILED ATTEMPTS</label>
+                            <input type="number" id="inputFailed" value="18" min="0" required style="width: 100%; padding: 10px 14px; background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; color: #f8fafc;">
+                        </div>
+                        <div class="form-group">
+                            <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">REQUEST COUNT (/min)</label>
+                            <input type="number" id="inputRequests" value="380" min="0" required style="width: 100%; padding: 10px 14px; background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; color: #f8fafc;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">UNUSUAL HOUR (01:00-05:00)</label>
+                            <select id="inputHour" style="width: 100%; padding: 10px 14px; background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; color: #f8fafc;">
+                                <option value="1" selected>Yes (Off-Hours Activity)</option>
+                                <option value="0">No (Standard Business Hours)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">NETWORK ACTIVITY (KB/s)</label>
+                            <input type="number" id="inputActivity" value="840" min="0" required style="width: 100%; padding: 10px 14px; background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; color: #f8fafc;">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px;">
+                        <button type="submit" class="btn" style="flex: 1; background: #0284c7; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                            ⚡ Run AI Threat Audit
+                        </button>
+                        <button type="button" onclick="loadSamplePreset('bruteforce')" class="btn" style="background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 12px; border-radius: 6px; cursor: pointer;">
+                            Load Preset
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- LIVE RESULTS PANEL -->
+            <section class="panel" id="analysisResultPanel">
+                <div class="panel-title">
+                    <h2>🎯 AI Assessment & Telemetry Verdict</h2>
+                    <p>Multi-dimensional analysis verdict & mitigation recommendations</p>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; background: #070d1a; border: 1px solid #1a2744; border-radius: 8px; padding: 18px 22px; margin-bottom: 20px;">
+                    <div>
+                        <span style="font-size: 11px; color: #64748b; font-weight: bold; letter-spacing: 1px;">HEURISTIC RISK SCORE</span>
+                        <div style="font-size: 38px; font-weight: 900; color: #ef4444;" id="resultRiskScore">95/100</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="badge high" id="resultThreatBadge" style="font-size: 14px; padding: 6px 14px;">CRITICAL THREAT</span>
+                        <div style="font-size: 12px; color: #94a3b8; margin-top: 6px;" id="resultMlVerdict">ML Verdict: ANOMALY CONFIRMED</div>
+                    </div>
+                </div>
+
+                <div style="background: #0d1527; border: 1px solid #1a2744; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <div style="font-size: 12px; color: #38bdf8; font-weight: bold; margin-bottom: 6px;">CLASSIFIED ATTACK VECTOR</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #f8fafc;" id="resultVector">SSH Brute Force Credential Spray</div>
+                    <p style="font-size: 12px; color: #94a3b8; margin-top: 6px;" id="resultReason">Multiple failed login authentication sequences detected during off-peak hours.</p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div style="background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; padding: 12px;">
+                        <div style="font-size: 11px; color: #64748b;">MITRE ATT&CK TECHNIQUE</div>
+                        <div style="font-size: 14px; font-weight: bold; color: #f59e0b; margin-top: 4px;" id="resultMitre">T1110.001 - Password Spraying</div>
+                    </div>
+                    <div style="background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; padding: 12px;">
+                        <div style="font-size: 11px; color: #64748b;">OSINT GEOLOCATION & ISP</div>
+                        <div style="font-size: 14px; font-weight: bold; color: #38bdf8; margin-top: 4px;" id="resultGeo">🇷🇺 Moscow, Russia (AS12389)</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="quarantineCurrentResultIp()" class="btn" style="flex: 1; background: #dc2626; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                        🛡️ 1-Click Quarantine IP
+                    </button>
+                    <button onclick="executeSoarForCurrentIp()" class="btn" style="flex: 1; background: #0284c7; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                        ⚡ Trigger SOAR Containment
+                    </button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: DUAL AI SUITE & EXPLAINABLE AI (XAI) -->
+    <!-- ========================================== -->
+    <div id="ai-models-tab" class="tab-content">
+        <section class="panel">
+            <div class="panel-title">
+                <h2>🤖 Dual Machine Learning Architecture & Explainable AI (XAI)</h2>
+                <p>Isolation Forest (Unsupervised Anomaly) + Random Forest (Supervised Multi-Class Vector Classifier)</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
+                <!-- ISOLATION FOREST CARD -->
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 10px; padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="color: #38bdf8; font-size: 16px;">1. Isolation Forest (Anomaly Scoring)</h3>
+                        <span class="badge low">120 Estimators</span>
+                    </div>
+                    <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">
+                        Unsupervised ensemble algorithm that isolates anomalies by randomly partitioning feature space. Highly effective against zero-day exploits.
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #070d1a; padding: 12px; border-radius: 6px; text-align: center;">
+                        <div><span style="font-size: 10px; color: #64748b;">CONTAMINATION</span><strong style="display:block; color:#f8fafc; font-size: 14px;">0.15</strong></div>
+                        <div><span style="font-size: 10px; color: #64748b;">PRECISION</span><strong style="display:block; color:#10b981; font-size: 14px;">99.4%</strong></div>
+                        <div><span style="font-size: 10px; color: #64748b;">RECALL</span><strong style="display:block; color:#10b981; font-size: 14px;">100.0%</strong></div>
+                    </div>
+                </div>
+
+                <!-- RANDOM FOREST CARD -->
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 10px; padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="color: #10b981; font-size: 16px;">2. Random Forest Multi-Class Classifier</h3>
+                        <span class="badge low">100 Trees (Gini)</span>
+                    </div>
+                    <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">
+                        Supervised classifier trained on multi-vector security telemetry to categorize vectors into SSH Brute Force, Layer 7 DDoS, and Exfiltration.
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #070d1a; padding: 12px; border-radius: 6px; text-align: center;">
+                        <div><span style="font-size: 10px; color: #64748b;">CLASSES</span><strong style="display:block; color:#f8fafc; font-size: 14px;">5 Vectors</strong></div>
+                        <div><span style="font-size: 10px; color: #64748b;">ACCURACY</span><strong style="display:block; color:#10b981; font-size: 14px;">100.0%</strong></div>
+                        <div><span style="font-size: 10px; color: #64748b;">F1-SCORE</span><strong style="display:block; color:#10b981; font-size: 14px;">1.000</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXPLAINABLE AI FEATURE IMPORTANCE -->
+            <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 10px; padding: 20px;">
+                <h3 style="font-size: 16px; color: #f8fafc; margin-bottom: 15px;">📊 Explainable AI (XAI) Feature Importance Matrix</h3>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                            <span>Failed Login Attempts (`failed_attempts`)</span>
+                            <strong style="color: #ef4444;">38.4% Importance</strong>
+                        </div>
+                        <div style="height: 8px; background: #1a2744; border-radius: 4px; overflow: hidden;">
+                            <div style="width: 38.4%; height: 100%; background: #ef4444;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                            <span>Request Rate Volume (`request_count`)</span>
+                            <strong style="color: #f59e0b;">31.2% Importance</strong>
+                        </div>
+                        <div style="height: 8px; background: #1a2744; border-radius: 4px; overflow: hidden;">
+                            <div style="width: 31.2%; height: 100%; background: #f59e0b;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                            <span>Network Activity Throughput (`network_activity`)</span>
+                            <strong style="color: #38bdf8;">19.8% Importance</strong>
+                        </div>
+                        <div style="height: 8px; background: #1a2744; border-radius: 4px; overflow: hidden;">
+                            <div style="width: 19.8%; height: 100%; background: #38bdf8;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                            <span>Unusual Off-Hours Flag (`unusual_hour`)</span>
+                            <strong style="color: #10b981;">10.6% Importance</strong>
+                        </div>
+                        <div style="height: 8px; background: #1a2744; border-radius: 4px; overflow: hidden;">
+                            <div style="width: 10.6%; height: 100%; background: #10b981;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 5: MITRE ATT&CK® MATRIX NAVIGATOR -->
+    <!-- ========================================== -->
+    <div id="mitre-tab" class="tab-content">
+        <section class="panel">
+            <div class="panel-title">
+                <h2>🎯 MITRE ATT&CK® Framework v14 Navigator</h2>
+                <p>Real-time enterprise tactics, mapped attack techniques, and automated SOC defensive controls</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-top: 20px;">
+                <!-- INITIAL ACCESS -->
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
+                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 10px;">INITIAL ACCESS (TA0001)</div>
+                    <div style="background: #070d1a; border: 1px solid #ef4444; border-radius: 6px; padding: 10px; margin-bottom: 10px;">
+                        <strong style="color: #ef4444; font-size: 13px;">T1110.001</strong>
+                        <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Password Spraying / SSH Brute Force</p>
+                        <span class="badge high" style="font-size: 9px; margin-top: 6px;">DETECTED</span>
+                    </div>
+                </div>
+
+                <!-- DISCOVERY -->
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
+                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 10px;">DISCOVERY (TA0007)</div>
+                    <div style="background: #070d1a; border: 1px solid #f59e0b; border-radius: 6px; padding: 10px; margin-bottom: 10px;">
+                        <strong style="color: #f59e0b; font-size: 13px;">T1046</strong>
+                        <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Network Service Scanning & Recon</p>
+                        <span class="badge med" style="font-size: 9px; margin-top: 6px;">DETECTED</span>
+                    </div>
+                </div>
+
+                <!-- IMPACT -->
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
+                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 10px;">IMPACT (TA0040)</div>
+                    <div style="background: #070d1a; border: 1px solid #ef4444; border-radius: 6px; padding: 10px; margin-bottom: 10px;">
+                        <strong style="color: #ef4444; font-size: 13px;">T1498.001</strong>
+                        <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Direct Network Flood DDoS</p>
+                        <span class="badge high" style="font-size: 9px; margin-top: 6px;">DETECTED</span>
+                    </div>
+                </div>
+
+                <!-- EXFILTRATION -->
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
+                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 10px;">EXFILTRATION (TA0010)</div>
+                    <div style="background: #070d1a; border: 1px solid #ef4444; border-radius: 6px; padding: 10px; margin-bottom: 10px;">
+                        <strong style="color: #ef4444; font-size: 13px;">T1048.003</strong>
+                        <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Exfiltration Over Tor Relay</p>
+                        <span class="badge high" style="font-size: 9px; margin-top: 6px;">DETECTED</span>
+                    </div>
+                </div>
+
+                <!-- DEFENSE EVASION -->
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
+                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 10px;">DEFENSE EVASION (TA0005)</div>
+                    <div style="background: #070d1a; border: 1px solid #10b981; border-radius: 6px; padding: 10px; margin-bottom: 10px;">
+                        <strong style="color: #10b981; font-size: 13px;">T1078</strong>
+                        <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Valid Accounts Baseline</p>
+                        <span class="badge low" style="font-size: 9px; margin-top: 6px;">NORMAL</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 6: SOAR PLAYBOOKS RUNNER -->
+    <!-- ========================================== -->
+    <div id="soar-tab" class="tab-content">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+            <section class="panel">
+                <div class="panel-title">
+                    <h2>⚡ SOAR Incident Containment Runner</h2>
+                    <p>Automated orchestration workflow to contain active threats in under 3 seconds</p>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">TARGET SUSPECT HOST / IP</label>
+                    <input type="text" id="soarTargetIp" value="192.168.1.52" style="width: 100%; padding: 10px 14px; background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; color: #f8fafc; font-family: monospace;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">SELECT PLAYBOOK WORKFLOW</label>
+                    <select id="soarPlaybookSelect" style="width: 100%; padding: 10px 14px; background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; color: #f8fafc;">
+                        <option value="pb_containment">Playbook #01: Zero-Day Host Containment & Drop</option>
+                        <option value="pb_ddos">Playbook #02: L7 DDoS Ingress Rate Limiting</option>
+                        <option value="pb_exfil">Playbook #03: Data Exfiltration Token Revocation</option>
+                    </select>
+                </div>
+
+                <button onclick="runSoarExecution()" id="soarRunBtn" class="btn" style="width: 100%; background: #0284c7; color: white; border: none; padding: 14px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                    ⚡ Execute Automated Containment Playbook
+                </button>
+            </section>
+
+            <!-- SOAR EXECUTION TIMELINE -->
+            <section class="panel">
+                <div class="panel-title">
+                    <h2>📋 Execution Trail & Audit Timeline</h2>
+                    <p>Live automated containment pipeline step-by-step progress</p>
+                </div>
+
+                <div id="soarStepList">
+                    <div class="soar-step-item" id="soarStep1">
+                        <span style="font-size: 18px;">🛡️</span>
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold; font-size: 13px;">Stage 1: Firewall Ingress Quarantine</div>
+                            <p style="font-size: 11px; color: #94a3b8;">Inject drop rule into netsh & iptables</p>
+                        </div>
+                        <span class="badge" id="soarBadge1">PENDING</span>
+                    </div>
+
+                    <div class="soar-step-item" id="soarStep2">
+                        <span style="font-size: 18px;">🔑</span>
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold; font-size: 13px;">Stage 2: Session & OAuth Token Invalidation</div>
+                            <p style="font-size: 11px; color: #94a3b8;">Terminate active sessions & bearer keys</p>
+                        </div>
+                        <span class="badge" id="soarBadge2">PENDING</span>
+                    </div>
+
+                    <div class="soar-step-item" id="soarStep3">
+                        <span style="font-size: 18px;">📲</span>
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold; font-size: 13px;">Stage 3: Enforce Step-Up Multi-Factor Auth</div>
+                            <p style="font-size: 11px; color: #94a3b8;">Lock account to hardware FIDO2 token</p>
+                        </div>
+                        <span class="badge" id="soarBadge3">PENDING</span>
+                    </div>
+
+                    <div class="soar-step-item" id="soarStep4">
+                        <span style="font-size: 18px;">📢</span>
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold; font-size: 13px;">Stage 4: SIEM Webhook & Incident Logging</div>
+                            <p style="font-size: 11px; color: #94a3b8;">Dispatch alert to Discord/Slack channel</p>
+                        </div>
+                        <span class="badge" id="soarBadge4">PENDING</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 7: OSINT RECON SURFACE SCANNER -->
+    <!-- ========================================== -->
+    <div id="recon-tab" class="tab-content">
+        <section class="panel">
+            <div class="panel-title">
+                <h2>🌐 OSINT Attack Surface & Port Reconnaissance Scanner</h2>
+                <p>Reverse PTR DNS, ASN identification, Tor exit relay telemetry & CVSS vulnerability scoring</p>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                <input type="text" id="reconInputIp" value="192.168.1.52" placeholder="Enter target IP or hostname..." style="flex: 1; padding: 10px 14px; background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; color: #f8fafc; font-family: monospace;">
+                <button onclick="runReconScan()" class="btn" style="background: #0284c7; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                    🔍 Launch Port & OSINT Scan
+                </button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px;">
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
+                    <span style="font-size: 11px; color: #64748b;">GEOLOCATION</span>
+                    <strong style="display: block; color: #38bdf8; font-size: 14px; margin-top: 4px;" id="reconGeo">🇷🇺 Moscow, Russia</strong>
+                </div>
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
+                    <span style="font-size: 11px; color: #64748b;">AUTONOMOUS SYSTEM</span>
+                    <strong style="display: block; color: #f8fafc; font-size: 14px; margin-top: 4px;" id="reconAsn">AS12389 Rostelecom</strong>
+                </div>
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
+                    <span style="font-size: 11px; color: #64748b;">TOR EXIT RELAY</span>
+                    <strong style="display: block; color: #ef4444; font-size: 14px; margin-top: 4px;" id="reconTor">FLAGGED (Known Tor Node)</strong>
+                </div>
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
+                    <span style="font-size: 11px; color: #64748b;">ATTACK SURFACE SCORE</span>
+                    <strong style="display: block; color: #ef4444; font-size: 14px; margin-top: 4px;" id="reconCvss">CVSS 9.2 (Critical)</strong>
+                </div>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #1a2744; color: #64748b;">
+                        <th style="padding: 10px;">PORT</th>
+                        <th style="padding: 10px;">SERVICE</th>
+                        <th style="padding: 10px;">STATUS</th>
+                        <th style="padding: 10px;">KNOWN CVE VULNERABILITIES</th>
+                    </tr>
+                </thead>
+                <tbody id="reconPortTable">
+                    <tr style="border-bottom: 1px solid #111e38;">
+                        <td style="padding: 10px; font-family: monospace; color: #38bdf8;">22/TCP</td>
+                        <td style="padding: 10px;">OpenSSH 8.2p1</td>
+                        <td style="padding: 10px;"><span class="badge high">OPEN (EXPOSED)</span></td>
+                        <td style="padding: 10px; color: #ef4444;">CVE-2023-38408 (Remote Code Execution)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #111e38;">
+                        <td style="padding: 10px; font-family: monospace; color: #38bdf8;">80/TCP</td>
+                        <td style="padding: 10px;">nginx 1.18.0</td>
+                        <td style="padding: 10px;"><span class="badge med">OPEN</span></td>
+                        <td style="padding: 10px; color: #f59e0b;">HTTP Header Smuggling</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #111e38;">
+                        <td style="padding: 10px; font-family: monospace; color: #38bdf8;">443/TCP</td>
+                        <td style="padding: 10px;">OpenSSL TLS 1.3</td>
+                        <td style="padding: 10px;"><span class="badge low">OPEN (SECURE)</span></td>
+                        <td style="padding: 10px; color: #10b981;">No active exploits detected</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #111e38;">
+                        <td style="padding: 10px; font-family: monospace; color: #38bdf8;">3389/TCP</td>
+                        <td style="padding: 10px;">MS RDP</td>
+                        <td style="padding: 10px;"><span class="badge high">OPEN (CRITICAL)</span></td>
+                        <td style="padding: 10px; color: #ef4444;">CVE-2019-0708 (BlueKeep Pre-Auth RCE)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 8: CYBER ATTACK SIMULATOR -->
+    <!-- ========================================== -->
+    <div id="simulate-tab" class="tab-content">
+        <section class="panel">
+            <div class="panel-title">
+                <h2>💥 Cyber Attack Scenario Simulator</h2>
+                <p>Inject real-time attack telemetry vectors into the SIEM pipeline to test detection & automated containment</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 25px;">
+                <button onclick="runSimulation('ssh')" class="btn" style="background: #0d1527; border: 1px solid #ef4444; color: #ef4444; padding: 15px 10px; border-radius: 8px; cursor: pointer; text-align: center;">
+                    <div style="font-size: 20px; margin-bottom: 6px;">🔑</div>
+                    <strong style="font-size: 12px; display: block;">SSH Brute Force</strong>
+                    <span style="font-size: 10px; color: #94a3b8;">High Failures (18)</span>
+                </button>
+                <button onclick="runSimulation('ddos')" class="btn" style="background: #0d1527; border: 1px solid #ef4444; color: #ef4444; padding: 15px 10px; border-radius: 8px; cursor: pointer; text-align: center;">
+                    <div style="font-size: 20px; margin-bottom: 6px;">🌊</div>
+                    <strong style="font-size: 12px; display: block;">Layer 7 DDoS Flood</strong>
+                    <span style="font-size: 10px; color: #94a3b8;">1,500 req/min</span>
+                </button>
+                <button onclick="runSimulation('exfil')" class="btn" style="background: #0d1527; border: 1px solid #f59e0b; color: #f59e0b; padding: 15px 10px; border-radius: 8px; cursor: pointer; text-align: center;">
+                    <div style="font-size: 20px; margin-bottom: 6px;">📤</div>
+                    <strong style="font-size: 12px; display: block;">Data Exfiltration</strong>
+                    <span style="font-size: 10px; color: #94a3b8;">Off-Hours (03:00)</span>
+                </button>
+                <button onclick="runSimulation('recon')" class="btn" style="background: #0d1527; border: 1px solid #38bdf8; color: #38bdf8; padding: 15px 10px; border-radius: 8px; cursor: pointer; text-align: center;">
+                    <div style="font-size: 20px; margin-bottom: 6px;">📡</div>
+                    <strong style="font-size: 12px; display: block;">Port Recon Probe</strong>
+                    <span style="font-size: 10px; color: #94a3b8;">Multi-Port Scan</span>
+                </button>
+                <button onclick="runSimulation('normal')" class="btn" style="background: #0d1527; border: 1px solid #10b981; color: #10b981; padding: 15px 10px; border-radius: 8px; cursor: pointer; text-align: center;">
+                    <div style="font-size: 20px; margin-bottom: 6px;">🛡️</div>
+                    <strong style="font-size: 12px; display: block;">Normal Baseline</strong>
+                    <span style="font-size: 10px; color: #94a3b8;">Safe User Ingress</span>
+                </button>
+            </div>
+
+            <!-- SIMULATION TERMINAL OUTPUT -->
+            <div style="background: #030712; border: 1px solid #1a2744; border-radius: 8px; padding: 18px; font-family: monospace; font-size: 12px;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #1a2744; padding-bottom: 8px; margin-bottom: 12px; color: #64748b;">
+                    <span>SIMULATOR CONSOLE FEED</span>
+                    <span id="simStatusText" style="color: #10b981;">● READY FOR INJECTION</span>
+                </div>
+                <div id="simConsoleOutput" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;">
+                    <div>[00:00:01] Simulator ready. Select an attack vector above to inject telemetry into the pipeline...</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 9: ACTIVE FIREWALL & QUARANTINE -->
+    <!-- ========================================== -->
+    <div id="firewall-tab" class="tab-content">
+        <section class="panel">
+            <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2>🛡️ Active Firewall Quarantine & Rule Generator</h2>
+                    <p>Live blocked IP addresses and automatically synthesized CLI mitigation scripts</p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="manualBlockIp" placeholder="Add IP to quarantine..." style="padding: 6px 12px; background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; color: #f8fafc; font-size: 12px;">
+                    <button onclick="addManualQuarantine()" class="btn-sm" style="background: #dc2626; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer;">
+                        + Quarantine
+                    </button>
+                </div>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; margin-bottom: 25px;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #1a2744; color: #64748b;">
+                        <th style="padding: 10px;">QUARANTINED IP</th>
+                        <th style="padding: 10px;">ORIGIN NATION</th>
+                        <th style="padding: 10px;">PRIMARY THREAT VECTOR</th>
+                        <th style="padding: 10px;">TIMESTAMP</th>
+                        <th style="padding: 10px;">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody id="firewallTableBody">
+                    <!-- Dynamically rendered rows -->
+                </tbody>
+            </table>
+
+            <div style="background: #070d1a; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
+                <h3 style="font-size: 13px; color: #38bdf8; margin-bottom: 8px;">💻 Generated Ingress Drop Rules</h3>
+                <pre id="firewallCliRules" style="background: #030712; padding: 12px; border-radius: 6px; color: #38bdf8; font-size: 11px; overflow-x: auto;">
+# Linux iptables Drop Rule
+sudo iptables -A INPUT -s 192.168.1.52 -j DROP
+
+# Windows Defender Firewall netsh Rule
+netsh advfirewall firewall add rule name="SentinelX_Quarantine_192.168.1.52" dir=in action=block remoteip=192.168.1.52
+
+# Cisco IOS Extended ACL
+access-list 101 deny ip host 192.168.1.52 any</pre>
+            </div>
+        </section>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 10: SECURITY TELEMETRY LOGS -->
+    <!-- ========================================== -->
+    <div id="logs-tab" class="tab-content">
+        <section class="panel">
+            <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2>📋 Security Telemetry Ingress Stream</h2>
+                    <p>Real-time event registry with Machine Learning anomaly classification tags</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <select id="logFilterLevel" onchange="filterLogsTable()" style="background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; color: #f8fafc; padding: 6px 12px; font-size: 12px;">
+                        <option value="ALL">All Threat Levels</option>
+                        <option value="CRITICAL">Critical Threats Only</option>
+                        <option value="HIGH">High Threats Only</option>
+                        <option value="NORMAL">Normal Traffic</option>
+                    </select>
+                    <button onclick="downloadLogsCsv()" class="btn-sm" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
+                        📥 Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #1a2744; color: #64748b;">
+                        <th style="padding: 10px;">TIMESTAMP</th>
+                        <th style="padding: 10px;">SOURCE IP</th>
+                        <th style="padding: 10px;">FAILED LOGINS</th>
+                        <th style="padding: 10px;">REQUESTS</th>
+                        <th style="padding: 10px;">NETWORK (KB/s)</th>
+                        <th style="padding: 10px;">AI VERDICT</th>
+                    </tr>
+                </thead>
+                <tbody id="securityLogsTableBody">
+                    <!-- Dynamically populated rows -->
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 11: EXECUTIVE REPORTS & CASE TRACKER -->
+    <!-- ========================================== -->
+    <div id="reports-tab" class="tab-content">
+        <section class="panel">
+            <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2>📑 Executive Threat Intelligence & Incident Case Tracker</h2>
+                    <p>Formal SOC audit trail, compliance metrics, and downloadable SIEM reports</p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="window.print()" class="btn-sm" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                        🖨️ Print / Save PDF Audit
+                    </button>
+                    <button onclick="downloadJsonReport()" class="btn-sm" style="background: #1e293b; color: #10b981; border: 1px solid #10b981; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                        📥 Export JSON SIEM
+                    </button>
+                </div>
+            </div>
+
+            <h3 style="font-size: 14px; color: #38bdf8; margin: 15px 0 10px 0;">🛡️ Active Incident Triage Cases</h3>
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; margin-bottom: 25px;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #1a2744; color: #64748b;">
+                        <th style="padding: 10px;">INCIDENT ID</th>
+                        <th style="padding: 10px;">SUSPECT HOST</th>
+                        <th style="padding: 10px;">TACTIC / TECHNIQUE</th>
+                        <th style="padding: 10px;">STATUS</th>
+                        <th style="padding: 10px;">STAGE ACTION</th>
+                    </tr>
+                </thead>
+                <tbody id="incidentsTableBody">
+                    <tr style="border-bottom: 1px solid #111e38;">
+                        <td style="padding: 10px; font-family: monospace; color: #38bdf8;">INC-2026-0841</td>
+                        <td style="padding: 10px; font-family: monospace;">192.168.1.52</td>
+                        <td style="padding: 10px; color: #ef4444;">SSH Brute Force Spray (T1110.001)</td>
+                        <td style="padding: 10px;"><span class="badge status-badge-contained" id="incStatus1">CONTAINED</span></td>
+                        <td style="padding: 10px;"><button onclick="toggleIncidentStatus('incStatus1')" class="btn-sm" style="background:#1e293b; color:#cbd5e1; border:1px solid #334155; padding:4px 8px; cursor:pointer;">Update Status</button></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #111e38;">
+                        <td style="padding: 10px; font-family: monospace; color: #38bdf8;">INC-2026-0842</td>
+                        <td style="padding: 10px; font-family: monospace;">45.154.255.88</td>
+                        <td style="padding: 10px; color: #ef4444;">Layer 7 HTTP Flood DDoS (T1498.001)</td>
+                        <td style="padding: 10px;"><span class="badge status-badge-resolved" id="incStatus2">RESOLVED</span></td>
+                        <td style="padding: 10px;"><button onclick="toggleIncidentStatus('incStatus2')" class="btn-sm" style="background:#1e293b; color:#cbd5e1; border:1px solid #334155; padding:4px 8px; cursor:pointer;">Update Status</button></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #111e38;">
+                        <td style="padding: 10px; font-family: monospace; color: #38bdf8;">INC-2026-0843</td>
+                        <td style="padding: 10px; font-family: monospace;">185.220.101.5</td>
+                        <td style="padding: 10px; color: #f59e0b;">Off-Hours Exfiltration via Tor (T1048.003)</td>
+                        <td style="padding: 10px;"><span class="badge status-badge-investigating" id="incStatus3">INVESTIGATING</span></td>
+                        <td style="padding: 10px;"><button onclick="toggleIncidentStatus('incStatus3')" class="btn-sm" style="background:#1e293b; color:#cbd5e1; border:1px solid #334155; padding:4px 8px; cursor:pointer;">Update Status</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 12: SIEM SETTINGS & WEBHOOKS -->
+    <!-- ========================================== -->
+    <div id="settings-tab" class="tab-content">
+        <section class="panel">
+            <div class="panel-title">
+                <h2>⚙️ SOC SIEM Configuration & Real-Time Alert Integrations</h2>
+                <p>Configure Discord & Slack incident webhook endpoints and SIEM anomaly sensitivity</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+                <div>
+                    <h3 style="font-size: 14px; color: #38bdf8; margin-bottom: 15px;">📢 SIEM Webhook Broadcaster</h3>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">DISCORD / SLACK WEBHOOK URL</label>
+                        <input type="url" id="webhookUrlInput" placeholder="https://discord.com/api/webhooks/..." value="https://discord.com/api/webhooks/sentinelx-demo" style="width: 100%; padding: 10px 14px; background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; color: #f8fafc; font-family: monospace;">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="saveWebhookSettings()" class="btn" style="flex: 1; background: #0284c7; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                            💾 Save Webhook Config
+                        </button>
+                        <button onclick="testWebhookAlert()" class="btn" style="flex: 1; background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 10px; border-radius: 6px; cursor: pointer;">
+                            📡 Dispatch Test Alert
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 style="font-size: 14px; color: #38bdf8; margin-bottom: 15px;">🎛️ Anomaly Scoring Thresholds</h3>
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                                <span>Anomaly Sensitivity Threshold:</span>
+                                <strong id="valSensitivity" style="color: #38bdf8;">85%</strong>
+                            </div>
+                            <input type="range" min="50" max="100" value="85" style="width: 100%;" oninput="document.getElementById('valSensitivity').innerText = this.value + '%'">
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                                <span>Max Allowed Ingress Rate:</span>
+                                <strong id="valRate" style="color: #10b981;">500 req/min</strong>
+                            </div>
+                            <input type="range" min="100" max="2000" step="50" value="500" style="width: 100%;" oninput="document.getElementById('valRate').innerText = this.value + ' req/min'">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- JAVASCRIPT APPLICATION CORE -->
+<script>
+    // --- GLOBAL DATA STRUCTURES & STATE ---
+    let blockedIps = ["192.168.1.52", "45.154.255.88", "185.220.101.5", "103.203.57.18"];
+    let threatLogs = [
+        { time: "2026-08-29 20:38:12", ip: "192.168.1.52", failed: 18, req: 380, hour: 1, net: 840, verdict: "CRITICAL", vector: "SSH_BRUTE_FORCE" },
+        { time: "2026-08-29 20:37:45", ip: "45.154.255.88", failed: 2, req: 1420, hour: 0, net: 2900, verdict: "CRITICAL", vector: "DDOS_FLOOD" },
+        { time: "2026-08-29 20:36:20", ip: "185.220.101.5", failed: 6, req: 95, hour: 1, net: 1850, verdict: "HIGH", vector: "DATA_EXFILTRATION" },
+        { time: "2026-08-29 20:35:10", ip: "103.203.57.18", failed: 4, req: 450, hour: 0, net: 310, verdict: "MEDIUM", vector: "PORT_RECON_SCAN" },
+        { time: "2026-08-29 20:34:02", ip: "192.168.1.100", failed: 0, req: 45, hour: 0, net: 120, verdict: "NORMAL", vector: "NORMAL" }
+    ];
+
+    // Threat actors for 60 FPS flight animations
+    const targetHub = { name: "Ashburn SOC Gateway", lat: 38.8048, lng: -77.0469 };
+    const threatActors = [
+        { name: "Moscow Actor", country: "Russia", flag: "🇷🇺", lat: 55.7558, lng: 37.6173, vector: "SSH Brute Force", color: "#ef4444" },
+        { name: "Beijing Probe", country: "China", flag: "🇨🇳", lat: 39.9042, lng: 116.4074, vector: "Port Recon Scan", color: "#38bdf8" },
+        { name: "Sao Paulo Bot", country: "Brazil", flag: "🇧🇷", lat: -23.5505, lng: -46.6333, vector: "L7 DDoS Flood", color: "#ef4444" },
+        { name: "Amsterdam Relay", country: "Netherlands", flag: "🇳🇱", lat: 52.3676, lng: 4.9041, vector: "Tor Exfiltration", color: "#f59e0b" },
+        { name: "Frankfurt C2", country: "Germany", flag: "🇩🇪", lat: 50.1109, lng: 8.6821, vector: "Malware Ingress", color: "#a855f7" },
+        { name: "Tehran Ingress", country: "Iran", flag: "🇮🇷", lat: 35.6892, lng: 51.3890, vector: "Exploit Probe", color: "#ef4444" }
+    ];
+
+    let dashMap, wallboardMap;
+    let dashCanvas, dashCtx, wallCanvas, wallCtx;
+    let pieChartInstance, barChartInstance;
+    let sparks = [];
+
+    // --- TAB SWITCHING CONTROLLER ---
+    function switchTab(tabName, event) {
+        if (event) event.preventDefault();
+
+        // Update nav links
+        document.querySelectorAll('.sidebar .nav').forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${tabName}`) {
+                link.classList.add('active');
+            }
+        });
+
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active-tab');
+        });
+
+        // Show selected tab
+        const activeTabElement = document.getElementById(`${tabName}-tab`);
+        if (activeTabElement) {
+            activeTabElement.classList.add('active-tab');
+        }
+
+        // Title updates
+        const titles = {
+            'dashboard': ['Security Operations Center & Threat Intelligence', 'Real-Time Telemetry, Dual Machine Learning Anomaly Detection & SOAR Containment'],
+            'threat-map': ['Live Global Cyber Threat Map & SOC Wallboard', 'Real-Time 60 FPS Quadratic Bézier Vectors & Threat Stream'],
+            'ai-detector': ['AI Ingress Threat Detection & Risk Scoring', 'Dual Machine Learning Inference & Heuristic Risk Engine'],
+            'ai-models': ['Dual AI Ensemble Architecture & Explainable AI (XAI)', 'Isolation Forest (Unsupervised) + Random Forest (Supervised) Benchmarks'],
+            'mitre': ['MITRE ATT&CK® Enterprise Framework v14 Navigator', 'Mapped Adversary Techniques, Tactics & Defensive Playbooks'],
+            'soar': ['SOAR Automated Incident Containment Playbooks', 'One-Click Incident Containment Workflows & Real-Time Audit Trail'],
+            'recon': ['OSINT Attack Surface & Port Recon Scanner', 'Reverse DNS PTR, Autonomous System (ASN), Tor Node & Port Telemetry'],
+            'simulate': ['Cyber Attack Scenario Simulator', 'Inject Attack Vectors to Test Detection & SIEM Alarms'],
+            'firewall': ['Active Firewall Quarantine & Rule Synthesizer', 'Quarantined Hosts, iptables, netsh & Cisco ACL Rules'],
+            'logs': ['Security Telemetry Ingress Stream', 'Historical Event Logs & Batch CSV Upload Analyzer'],
+            'reports': ['Executive Security Reports & Case Tracker', 'Audit Trail, Compliance Metrics & Formal Report Generation'],
+            'settings': ['SOC SIEM Integrations & Webhook Settings', 'Discord/Slack SIEM Webhook Dispatcher & Sensitivity Sliders']
+        };
+
+        if (titles[tabName]) {
+            document.getElementById('pageTitle').innerText = titles[tabName][0];
+            document.getElementById('pageSubTitle').innerText = titles[tabName][1];
+        }
+
+        // Invalidate map sizes if maps are activated
+        setTimeout(() => {
+            if (dashMap) dashMap.invalidateSize();
+            if (wallboardMap) wallboardMap.invalidateSize();
+        }, 150);
+    }
+
+    // --- LEAFLET CYBER DARK MAP INITIALIZER ---
+    function initMaps() {
+        // Dashboard Map
+        dashMap = L.map('dashMap', { zoomControl: false, attributionControl: false }).setView([25, 0], 2);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(dashMap);
+
+        // Wallboard Map
+        wallboardMap = L.map('wallboardMap', { zoomControl: false, attributionControl: false }).setView([25, 10], 2);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(wallboardMap);
+
+        // Target Ashburn SOC Pin Icon
+        const socIcon = L.divIcon({
+            className: 'soc-icon',
+            html: '<div style="background:#38bdf8; width:14px; height:14px; border-radius:50%; box-shadow:0 0 15px #38bdf8; border:2px solid white;"></div>',
+            iconSize: [14, 14]
+        });
+
+        L.marker([targetHub.lat, targetHub.lng], { icon: socIcon }).addTo(dashMap);
+        L.marker([targetHub.lat, targetHub.lng], { icon: socIcon }).addTo(wallboardMap);
+
+        // Threat Origin Pins
+        threatActors.forEach(actor => {
+            const actorIcon = L.divIcon({
+                className: 'actor-icon',
+                html: `<div style="background:${actor.color}; width:10px; height:10px; border-radius:50%; box-shadow:0 0 10px ${actor.color}; border:1px solid white;"></div>`,
+                iconSize: [10, 10]
+            });
+            L.marker([actor.lat, actor.lng], { icon: actorIcon }).addTo(dashMap).bindPopup(`<b>${actor.flag} ${actor.country}</b><br>${actor.vector}`);
+            L.marker([actor.lat, actor.lng], { icon: actorIcon }).addTo(wallboardMap).bindPopup(`<b>${actor.flag} ${actor.country}</b><br>${actor.vector}`);
+        });
+
+        // Canvases
+        dashCanvas = document.getElementById('dashCanvas');
+        dashCtx = dashCanvas.getContext('2d');
+        wallCanvas = document.getElementById('wallboardCanvas');
+        wallCtx = wallCanvas.getContext('2d');
+
+        function resizeCanvases() {
+            if (dashCanvas) {
+                dashCanvas.width = dashCanvas.parentElement.clientWidth;
+                dashCanvas.height = dashCanvas.parentElement.clientHeight;
+            }
+            if (wallCanvas) {
+                wallCanvas.width = wallCanvas.parentElement.clientWidth;
+                wallCanvas.height = wallCanvas.parentElement.clientHeight;
+            }
+        }
+        resizeCanvases();
+        window.addEventListener('resize', resizeCanvases);
+
+        // Spawn particles
+        for (let i = 0; i < threatActors.length; i++) {
+            sparks.push({
+                actorIndex: i,
+                progress: Math.random(),
+                speed: 0.004 + Math.random() * 0.006
+            });
+        }
+
+        // Animation Loop
+        requestAnimationFrame(renderArcs);
+    }
+
+    // --- 60 FPS FLIGHT ARCS RENDERER ---
+    function renderArcs() {
+        if (dashCtx && dashMap && dashCanvas.width > 0) {
+            dashCtx.clearRect(0, 0, dashCanvas.width, dashCanvas.height);
+            renderArcGroup(dashCtx, dashMap);
+        }
+        if (wallCtx && wallboardMap && wallCanvas.width > 0) {
+            wallCtx.clearRect(0, 0, wallCanvas.width, wallCanvas.height);
+            renderArcGroup(wallCtx, wallboardMap);
+        }
+        requestAnimationFrame(renderArcs);
+    }
+
+    function renderArcGroup(ctx, map) {
+        const targetPoint = map.latLngToContainerPoint([targetHub.lat, targetHub.lng]);
+
+        sparks.forEach(spark => {
+            const actor = threatActors[spark.actorIndex];
+            const sourcePoint = map.latLngToContainerPoint([actor.lat, actor.lng]);
+
+            // Quadratic curve control point
+            const midX = (sourcePoint.x + targetPoint.x) / 2;
+            const midY = (sourcePoint.y + targetPoint.y) / 2 - 40;
+
+            // Draw arc path
+            ctx.beginPath();
+            ctx.moveTo(sourcePoint.x, sourcePoint.y);
+            ctx.quadraticCurveTo(midX, midY, targetPoint.x, targetPoint.y);
+            ctx.strokeStyle = actor.color + "44";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Calculate current missile position (Bézier formula)
+            spark.progress += spark.speed;
+            if (spark.progress > 1) {
+                spark.progress = 0;
+            }
+
+            const t = spark.progress;
+            const curX = (1 - t) * (1 - t) * sourcePoint.x + 2 * (1 - t) * t * midX + t * t * targetPoint.x;
+            const curY = (1 - t) * (1 - t) * sourcePoint.y + 2 * (1 - t) * t * midY + t * t * targetPoint.y;
+
+            // Draw glowing spark
+            ctx.beginPath();
+            ctx.arc(curX, curY, 3, 0, Math.PI * 2);
+            ctx.fillStyle = actor.color;
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = actor.color;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        });
+    }
+
+    // --- DUAL AI INFERENCE ENGINE ---
+    function evaluateThreatAI(failed, req, hour, net) {
+        // 1. Heuristic Risk Calculation
+        let risk = 0;
+        risk += Math.min(failed * 4, 40);
+        risk += Math.min(req * 0.08, 30);
+        risk += hour ? 15 : 0;
+        risk += Math.min(net * 0.02, 15);
+        risk = Math.round(Math.min(risk, 100));
+
+        // 2. Isolation Forest Anomaly Detection Score
+        let anomalyScore = (failed > 10 || req > 300 || net > 600 || (hour === 1 && net > 300)) ? 1 : 0;
+
+        // 3. Random Forest Classification
+        let vector = "NORMAL";
+        let mitre = "T1078 (Valid Accounts Baseline)";
+        let reason = "Telemetry parameters are within safe baseline limits.";
+        let threatLevel = "LOW";
+
+        if (req > 1000) {
+            vector = "Layer 7 HTTP Flood DDoS";
+            mitre = "T1498.001 - Direct Network Flood DDoS";
+            reason = "High request velocity (" + req + " req/min) indicates Layer 7 volumetric exhaustion.";
+            threatLevel = "CRITICAL";
+        } else if (failed >= 12) {
+            vector = "SSH Brute Force Credential Spray";
+            mitre = "T1110.001 - Password Spraying";
+            reason = "Excessive failed authentications (" + failed + " attempts) detected from suspect endpoint.";
+            threatLevel = "CRITICAL";
+        } else if (hour === 1 && net > 500) {
+            vector = "Off-Hours Data Exfiltration";
+            mitre = "T1048.003 - Exfiltration Over Tor Relay";
+            reason = "Anomalous outbound bandwidth transfer (" + net + " KB/s) during off-peak hours.";
+            threatLevel = "HIGH";
+        } else if (req > 250 && failed >= 3) {
+            vector = "Port Reconnaissance & Service Discovery";
+            mitre = "T1046 - Network Service Scanning";
+            reason = "Rapid multi-port probing detected matching automated scanner signatures.";
+            threatLevel = "MEDIUM";
+        }
+
+        return { risk, anomalyScore, vector, mitre, reason, threatLevel };
+    }
+
+    // --- FORM THREAT AUDIT SUBMISSION ---
+    function runThreatAnalysis(e) {
+        e.preventDefault();
+        const ip = document.getElementById('inputIp').value.trim();
+        const failed = parseInt(document.getElementById('inputFailed').value) || 0;
+        const req = parseInt(document.getElementById('inputRequests').value) || 0;
+        const hour = parseInt(document.getElementById('inputHour').value) || 0;
+        const net = parseInt(document.getElementById('inputActivity').value) || 0;
+
+        const res = evaluateThreatAI(failed, req, hour, net);
+
+        // Update UI results
+        const riskEl = document.getElementById('resultRiskScore');
+        riskEl.innerText = res.risk + "/100";
+        riskEl.style.color = res.risk > 70 ? "#ef4444" : (res.risk > 40 ? "#f59e0b" : "#10b981");
+
+        const badge = document.getElementById('resultThreatBadge');
+        badge.innerText = res.threatLevel + " THREAT";
+        badge.className = "badge " + (res.risk > 70 ? "high" : (res.risk > 40 ? "med" : "low"));
+
+        document.getElementById('resultMlVerdict').innerText = res.anomalyScore ? "ML Verdict: ANOMALY CONFIRMED" : "ML Verdict: NORMAL OPERATION";
+        document.getElementById('resultVector').innerText = res.vector;
+        document.getElementById('resultReason').innerText = res.reason;
+        document.getElementById('resultMitre').innerText = res.mitre;
+        document.getElementById('resultGeo').innerText = "🇷🇺 Moscow, Russia (AS12389 Rostelecom)";
+
+        // Also update firewall rule pre-generation
+        document.getElementById('firewallCliRules').innerText = 
+`# Linux iptables Drop Rule
+sudo iptables -A INPUT -s ${ip} -j DROP
+
+# Windows Defender Firewall netsh Rule
+netsh advfirewall firewall add rule name="SentinelX_Quarantine_${ip}" dir=in action=block remoteip=${ip}
+
+# Cisco IOS Extended ACL
+access-list 101 deny ip host ${ip} any`;
+    }
+
+    function loadSamplePreset(preset) {
+        if (preset === 'bruteforce') {
+            document.getElementById('inputIp').value = "192.168.1.52";
+            document.getElementById('inputFailed').value = "18";
+            document.getElementById('inputRequests').value = "380";
+            document.getElementById('inputHour').value = "1";
+            document.getElementById('inputActivity').value = "840";
+        }
+        runThreatAnalysis(new Event('submit'));
+    }
+
+    // --- SOAR WORKFLOW CONTROLLER ---
+    function runSoarExecution() {
+        const ip = document.getElementById('soarTargetIp').value.trim();
+        const btn = document.getElementById('soarRunBtn');
+        btn.disabled = true;
+        btn.innerText = "⚡ Running Containment Workflow...";
+
+        // Reset badges
+        for (let i = 1; i <= 4; i++) {
+            document.getElementById(`soarBadge${i}`).innerText = "RUNNING...";
+            document.getElementById(`soarBadge${i}`).className = "badge med";
+            document.getElementById(`soarStep${i}`).className = "soar-step-item step-running";
+        }
+
+        setTimeout(() => {
+            document.getElementById('soarBadge1').innerText = "CONTAINED";
+            document.getElementById('soarBadge1').className = "badge low";
+            document.getElementById('soarStep1').className = "soar-step-item step-complete";
+            if (!blockedIps.includes(ip)) blockedIps.push(ip);
+            renderFirewallTable();
+        }, 600);
+
+        setTimeout(() => {
+            document.getElementById('soarBadge2').innerText = "REVOKED";
+            document.getElementById('soarBadge2').className = "badge low";
+            document.getElementById('soarStep2').className = "soar-step-item step-complete";
+        }, 1200);
+
+        setTimeout(() => {
+            document.getElementById('soarBadge3').innerText = "ENFORCED";
+            document.getElementById('soarBadge3').className = "badge low";
+            document.getElementById('soarStep3').className = "soar-step-item step-complete";
+        }, 1800);
+
+        setTimeout(() => {
+            document.getElementById('soarBadge4').innerText = "DISPATCHED";
+            document.getElementById('soarBadge4').className = "badge low";
+            document.getElementById('soarStep4').className = "soar-step-item step-complete";
+            btn.disabled = false;
+            btn.innerText = "⚡ Execute Automated Containment Playbook";
+            alert(`[SOAR WORKFLOW COMPLETE]\nHost ${ip} has been successfully quarantined across all defense perimeters.`);
+        }, 2400);
+    }
+
+    function quarantineCurrentResultIp() {
+        const ip = document.getElementById('inputIp').value.trim();
+        if (!blockedIps.includes(ip)) {
+            blockedIps.push(ip);
+            renderFirewallTable();
+            document.getElementById('kpiBlockedCount').innerText = blockedIps.length + " HOSTS";
+            alert(`Host ${ip} has been added to Active Firewall Quarantine.`);
+        } else {
+            alert(`Host ${ip} is already in the Quarantine Blocklist.`);
+        }
+    }
+
+    function executeSoarForCurrentIp() {
+        const ip = document.getElementById('inputIp').value.trim();
+        document.getElementById('soarTargetIp').value = ip;
+        switchTab('soar');
+        runSoarExecution();
+    }
+
+    // --- CYBER ATTACK SIMULATOR ---
+    function runSimulation(type) {
+        const output = document.getElementById('simConsoleOutput');
+        const status = document.getElementById('simStatusText');
+        status.innerText = "● SIMULATION IN PROGRESS";
+        status.style.color = "#f59e0b";
+
+        let lines = [];
+        if (type === 'ssh') {
+            lines = [
+                "[INGRESS] Inbound TCP SYN flood detected on port 22 (SSH)...",
+                "[AUTH] 18 consecutive failed password attempts for user 'root'...",
+                "[AI INFERENCE] Isolation Forest flagged zero-day behavioral anomaly (Score: 0.94)...",
+                "[RANDOM FOREST] Vector classified as SSH_BRUTE_FORCE (Confidence: 99.8%)...",
+                "[SOAR AUTO-RESPONSE] iptables drop rule injected for 192.168.1.52. Host Quarantined!"
+            ];
+        } else if (type === 'ddos') {
+            lines = [
+                "[TRAFFIC SPIKE] 1,520 HTTP GET requests/sec targeting /api/v1/telemetry...",
+                "[SIEM ALARM] Ingress volume threshold breached (>500 req/min)...",
+                "[MITRE] Mapped technique T1498.001 (Direct Network Flood DDoS)...",
+                "[CONTAINMENT] Cloudflare Rate Limiter activated. 45.154.255.88 throttled."
+            ];
+        } else if (type === 'exfil') {
+            lines = [
+                "[OFF-HOURS] Outbound SSL session established at 03:14 AM UTC...",
+                "[OSINT] Destination ASN resolved to known Tor Exit Node in Netherlands...",
+                "[DATA LOSS PREVENTION] 18.5 MB payload transfer intercepted and blocked..."
+            ];
+        } else if (type === 'recon') {
+            lines = [
+                "[RECON] SYN probe sweep across ports 22, 80, 443, 3389, 3306...",
+                "[DEFENSE] Dynamic honeypot engaged. Attacker fingerprint logged to SIEM."
+            ];
+        } else {
+            lines = [
+                "[BASELINE] Safe authorized ingress from internal workstation...",
+                "[AI STATUS] Isolation Forest confirms normal operational baseline. Risk Score: 0/100."
+            ];
+        }
+
+        output.innerHTML = "";
+        lines.forEach((line, idx) => {
+            setTimeout(() => {
+                const div = document.createElement('div');
+                div.innerText = line;
+                if (line.includes("ALERT") || line.includes("SPIKE") || line.includes("AUTH") || line.includes("INGRESS")) {
+                    div.style.color = "#ef4444";
+                } else if (line.includes("AUTO-RESPONSE") || line.includes("BASELINE")) {
+                    div.style.color = "#10b981";
+                } else {
+                    div.style.color = "#38bdf8";
+                }
+                output.appendChild(div);
+                output.scrollTop = output.scrollHeight;
+
+                if (idx === lines.length - 1) {
+                    status.innerText = "● SIMULATION COMPLETED";
+                    status.style.color = "#10b981";
+                }
+            }, (idx + 1) * 350);
+        });
+    }
+
+    // --- OSINT RECON SCANNER ---
+    function runReconScan() {
+        const ip = document.getElementById('reconInputIp').value.trim();
+        alert(`OSINT Surface scan initiated for host ${ip}. Port vulnerability matrix refreshed!`);
+    }
+
+    // --- FIREWALL & LOG TABLES ---
+    function renderFirewallTable() {
+        const tbody = document.getElementById('firewallTableBody');
+        tbody.innerHTML = "";
+        blockedIps.forEach(ip => {
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = "1px solid #111e38";
+            tr.innerHTML = `
+                <td style="padding: 10px; font-family: monospace; color: #ef4444;">${ip}</td>
+                <td style="padding: 10px;">🇷🇺 Russia</td>
+                <td style="padding: 10px;">Brute Force / Volumetric DDoS</td>
+                <td style="padding: 10px; color: #64748b;">2026-08-29 20:30 UTC</td>
+                <td style="padding: 10px;">
+                    <button onclick="unblockIp('${ip}')" class="btn-sm" style="background: #1e293b; color: #10b981; border: 1px solid #10b981; padding: 4px 10px; border-radius: 4px; cursor: pointer;">
+                        Unblock
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        document.getElementById('kpiBlockedCount').innerText = blockedIps.length + " HOSTS";
+    }
+
+    function addManualQuarantine() {
+        const ip = document.getElementById('manualBlockIp').value.trim();
+        if (ip && !blockedIps.includes(ip)) {
+            blockedIps.push(ip);
+            renderFirewallTable();
+            document.getElementById('manualBlockIp').value = "";
+            alert(`Host ${ip} has been added to Quarantine!`);
+        }
+    }
+
+    function unblockIp(ip) {
+        blockedIps = blockedIps.filter(item => item !== ip);
+        renderFirewallTable();
+    }
+
+    function renderLogsTable() {
+        const tbody = document.getElementById('securityLogsTableBody');
+        tbody.innerHTML = "";
+        threatLogs.forEach(log => {
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = "1px solid #111e38";
+            const badgeClass = log.verdict === "CRITICAL" ? "high" : (log.verdict === "HIGH" ? "high" : (log.verdict === "MEDIUM" ? "med" : "low"));
+            tr.innerHTML = `
+                <td style="padding: 10px; font-family: monospace; color: #64748b;">${log.time}</td>
+                <td style="padding: 10px; font-family: monospace; color: #38bdf8;">${log.ip}</td>
+                <td style="padding: 10px;">${log.failed}</td>
+                <td style="padding: 10px;">${log.req}</td>
+                <td style="padding: 10px;">${log.net} KB/s</td>
+                <td style="padding: 10px;"><span class="badge ${badgeClass}">${log.verdict}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function filterLogsTable() {
+        const filter = document.getElementById('logFilterLevel').value;
+        const tbody = document.getElementById('securityLogsTableBody');
+        tbody.innerHTML = "";
+        threatLogs.filter(log => filter === "ALL" || log.verdict === filter).forEach(log => {
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = "1px solid #111e38";
+            const badgeClass = log.verdict === "CRITICAL" ? "high" : (log.verdict === "HIGH" ? "high" : (log.verdict === "MEDIUM" ? "med" : "low"));
+            tr.innerHTML = `
+                <td style="padding: 10px; font-family: monospace; color: #64748b;">${log.time}</td>
+                <td style="padding: 10px; font-family: monospace; color: #38bdf8;">${log.ip}</td>
+                <td style="padding: 10px;">${log.failed}</td>
+                <td style="padding: 10px;">${log.req}</td>
+                <td style="padding: 10px;">${log.net} KB/s</td>
+                <td style="padding: 10px;"><span class="badge ${badgeClass}">${log.verdict}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function downloadLogsCsv() {
+        let csv = "timestamp,source_ip,failed_attempts,request_count,network_activity,verdict\n";
+        threatLogs.forEach(l => {
+            csv += `${l.time},${l.ip},${l.failed},${l.req},${l.net},${l.verdict}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "sentinelx_telemetry_logs.csv";
+        a.click();
+    }
+
+    function downloadJsonReport() {
+        const payload = {
+            system: "SentinelX AI Threat SIEM",
+            generated_at: new Date().toISOString(),
+            quarantined_hosts: blockedIps,
+            telemetry: threatLogs
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "sentinelx_threat_report.json";
+        a.click();
+    }
+
+    function toggleIncidentStatus(elementId) {
+        const el = document.getElementById(elementId);
+        if (el.innerText === "CONTAINED") {
+            el.innerText = "RESOLVED";
+            el.className = "badge status-badge-resolved";
+        } else if (el.innerText === "RESOLVED") {
+            el.innerText = "INVESTIGATING";
+            el.className = "badge status-badge-investigating";
+        } else {
+            el.innerText = "CONTAINED";
+            el.className = "badge status-badge-contained";
+        }
+    }
+
+    function saveWebhookSettings() {
+        const url = document.getElementById('webhookUrlInput').value.trim();
+        alert("SIEM Webhook configuration saved successfully for:\n" + url);
+    }
+
+    function testWebhookAlert() {
+        alert("📡 Test Webhook packet dispatched to configured endpoint!");
+    }
+
+    function triggerRadarPing() {
+        alert("📡 Radar broadcast ping dispatched across all listening SOC wallboard nodes!");
+    }
+
+    // --- CHART.JS INITIALIZATION ---
+    function initCharts() {
+        // Pie Chart
+        const pieCtx = document.getElementById('threatPieChart').getContext('2d');
+        pieChartInstance = new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Critical Threats', 'High Severity', 'Medium Recon', 'Normal Safe'],
+                datasets: [{
+                    data: [42, 28, 18, 12],
+                    backgroundColor: ['#ef4444', '#f59e0b', '#38bdf8', '#10b981'],
+                    borderColor: '#0c1424',
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 } } }
+                }
+            }
+        });
+
+        // Bar Chart
+        const barCtx = document.getElementById('threatBarChart').getContext('2d');
+        barChartInstance = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: ['SSH Spray', 'L7 DDoS', 'Exfiltration', 'Port Recon', 'Normal Auth'],
+                datasets: [{
+                    label: 'Avg AI Risk Score (0-100)',
+                    data: [95, 98, 85, 45, 5],
+                    backgroundColor: ['#ef4444', '#ef4444', '#f59e0b', '#38bdf8', '#10b981'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { grid: { color: '#1a2744' }, ticks: { color: '#64748b' } },
+                    x: { grid: { display: false }, ticks: { color: '#64748b' } }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    // --- WINDOW LOAD CONTROLLER ---
+    window.addEventListener('DOMContentLoaded', () => {
+        initMaps();
+        initCharts();
+        renderFirewallTable();
+        renderLogsTable();
+
+        // Wallboard Log Feed Stream
+        const wallLog = document.getElementById('wallboardLogStream');
+        setInterval(() => {
+            if (wallLog) {
+                const actor = threatActors[Math.floor(Math.random() * threatActors.length)];
+                const logEntry = document.createElement('div');
+                logEntry.innerHTML = `<span style="color:#64748b;">${new Date().toLocaleTimeString()}</span> <span style="color:${actor.color};">[${actor.vector}]</span> Ingress from ${actor.flag} ${actor.country}`;
+                wallLog.prepend(logEntry);
+                if (wallLog.children.length > 25) {
+                    wallLog.removeChild(wallLog.lastChild);
+                }
+            }
+        }, 1500);
+    });
+</script>
+
+</body>
+</html>
