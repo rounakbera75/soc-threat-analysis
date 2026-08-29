@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentinelX | Security Logs & Batch CSV Scanner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>🛡 SentinelX</h2>
+    <p>AI Threat Detection</p>
+    <a href="/" class="nav">📊 Dashboard</a>
+    <a href="/map" target="_blank" class="nav">🌍 Live Threat Map</a>
+    <a href="/#analyze-section" class="nav">🔍 Threat Detection</a>
+    <a href="/recon" class="nav">🌐 Recon Scanner</a>
+    <a href="/simulate" class="nav">⚡ Attack Simulator</a>
+    <a href="/firewall" class="nav">🛡️ Firewall & Blocklist</a>
+    <a href="/logs" class="nav active">📋 Security Logs</a>
+    <a href="/reports" class="nav">📑 Security Reports</a>
+    <a href="/settings" class="nav">⚙️ SOC Settings</a>
+</div>
+
+<div class="main">
+    <header>
+        <div>
+            <h1>Security Logs Telemetry & Batch Ingestion</h1>
+            <p>Raw edge access telemetry, custom CSV file batch scanner, and log analytics</p>
+        </div>
+        <div class="online">
+            ● INGESTION ACTIVE
+        </div>
+    </header>
+
+    {% if upload_msg %}
+    <div class="alert-banner {{ 'alert-success' if upload_success else 'alert-danger' }}">
+        {{ upload_msg }}
+    </div>
+    {% endif %}
+
+    <!-- LOG OPERATIONS & UPLOAD PANEL -->
+    <section class="panel">
+        <div class="panel-title">
+            <h2>📁 Ingest Custom Security Logs (CSV File Upload)</h2>
+            <p>Upload your web server or firewall CSV access logs to run batch AI threat scoring on all records.</p>
+        </div>
+
+        <form method="POST" action="/upload" enctype="multipart/form-data" class="upload-box">
+            <div class="upload-dropzone">
+                <input type="file" name="logfile" accept=".csv" required id="csvFileInput" onchange="document.getElementById('fileNameLabel').textContent = this.files[0] ? this.files[0].name : 'No file chosen';">
+                <div class="upload-icon">📥</div>
+                <strong id="fileNameLabel">Choose or drag & drop a .CSV security log file</strong>
+                <p style="color: #64748b; font-size: 12px; margin-top: 4px;">Expected columns: <code>timestamp, source_ip, failed_attempts, request_count, unusual_hour, network_activity</code></p>
+            </div>
+
+            <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-top: 15px;">
+                <button type="submit" class="btn-report btn-primary-report">
+                    ⚡ Ingest & Batch Scan Logs
+                </button>
+                <div style="display: flex; gap: 10px;">
+                    <a href="/export/csv" class="btn-report btn-secondary-report">
+                        📥 Download Existing Logs (CSV)
+                    </a>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <!-- LOGS TABLE -->
+    <section class="panel">
+        <div class="panel-title">
+            <h2>📄 Ingested Security Logs ({{ logs|length }} Total Records)</h2>
+            <p>Real-time security events captured by network telemetry sensors</p>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Source IP</th>
+                        <th>Failed Logins</th>
+                        <th>Request Count</th>
+                        <th>Unusual Hour</th>
+                        <th>Network Activity (KB)</th>
+                        <th>Quick SOC Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in logs %}
+                    <tr>
+                        <td><code>{{ row.timestamp }}</code></td>
+                        <td><strong><code>{{ row.source_ip }}</code></strong></td>
+                        <td>{{ row.failed_attempts }}</td>
+                        <td>{{ row.request_count }}</td>
+                        <td>{{ 'YES (1)' if row.unusual_hour == 1 or row.unusual_hour == '1' else 'NO (0)' }}</td>
+                        <td>{{ row.network_activity }}</td>
+                        <td>
+                            <div style="display: flex; gap: 4px; justify-content: center;">
+                                <a href="/analyze?source_ip={{ row.source_ip }}" class="btn-sm btn-action-sm">
+                                    🚨 Analyze
+                                </a>
+                                <a href="/report/{{ row.source_ip }}" class="btn-sm btn-report-sm" target="_blank">
+                                    📄 Report
+                                </a>
+                                <form method="POST" action="/firewall/block" style="display: inline;">
+                                    <input type="hidden" name="ip" value="{{ row.source_ip }}">
+                                    <input type="hidden" name="threat_level" value="HIGH">
+                                    <input type="hidden" name="reason" value="Quick quarantine from logs telemetry">
+                                    <button type="submit" class="btn-sm btn-danger-sm" title="Quarantine IP in Firewall">
+                                        🚫 Block
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <footer>
+        SentinelX • Cyber Security Threat Monitoring & Telemetry Ingestion Engine
+    </footer>
+</div>
+
+</body>
+</html>

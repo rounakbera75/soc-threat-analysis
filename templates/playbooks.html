@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentinelX | SOAR Automated Incident Response Playbooks</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>🛡 SentinelX</h2>
+    <p>AI Threat Detection</p>
+    <a href="/" class="nav">📊 Dashboard</a>
+    <a href="/map" target="_blank" class="nav">🌍 Live Threat Map</a>
+    <a href="/ai-models" class="nav">🤖 AI Models & XAI</a>
+    <a href="/mitre" class="nav">🎯 MITRE ATT&CK Matrix</a>
+    <a href="/playbooks" class="nav active">⚡ SOAR Playbooks</a>
+    <a href="/#analyze-section" class="nav">🔍 Threat Detection</a>
+    <a href="/recon" class="nav">🌐 Recon Scanner</a>
+    <a href="/simulate" class="nav">💥 Attack Simulator</a>
+    <a href="/firewall" class="nav">🛡️ Firewall & Blocklist</a>
+    <a href="/logs" class="nav">📋 Security Logs</a>
+    <a href="/reports" class="nav">📑 Security Reports</a>
+    <a href="/settings" class="nav">⚙️ SOC Settings</a>
+</div>
+
+<div class="main">
+    <header>
+        <div>
+            <h1>Security Orchestration, Automation & Response (SOAR)</h1>
+            <p>Automated multi-stage incident containment workflows, active defense playbooks, and mitigation pipelines</p>
+        </div>
+        <div class="online">
+            ● SOAR RUNNER READY
+        </div>
+    </header>
+
+    {% if execution_result %}
+    <!-- PLAYBOOK EXECUTION TIMELINE CARD -->
+    <section class="panel result-panel" style="border-left: 4px solid #10b981;">
+        <div class="panel-title">
+            <h2>⚡ SOAR Playbook Executed: {{ execution_result.playbook_name }}</h2>
+            <p>Target Host: <strong><code>{{ execution_result.target_ip }}</code></strong> • Execution ID: <code>{{ execution_result.execution_id }}</code></p>
+        </div>
+
+        <div style="background: #080d1a; border: 1px solid #1a2744; border-radius: 8px; padding: 20px; margin-top: 15px;">
+            <h3 style="font-size: 15px; color: #38bdf8; margin-bottom: 15px;">📜 Step-by-Step Automated Execution Timeline</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                {% for step in execution_result.steps %}
+                <div style="display: flex; gap: 15px; align-items: center; padding: 10px 14px; background: #0c1424; border-radius: 6px; border: 1px solid #1e293b;">
+                    <div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(16, 185, 129, 0.2); color: #10b981; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px;">
+                        ✓
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <strong style="color: #f8fafc; font-size: 13px;">Stage {{ step.num }}: {{ step.action }}</strong>
+                            <span class="badge low">{{ step.status }}</span>
+                        </div>
+                        <code style="font-size: 11px; color: #38bdf8; margin-top: 3px; display: inline-block;">{{ step.command }}</code>
+                    </div>
+                    <small style="color: #64748b;">{{ step.executed_at }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="report-toolbar">
+            <div class="report-buttons">
+                <a href="/report/{{ execution_result.target_ip }}" class="btn-report btn-primary-report" target="_blank">
+                    📄 View Updated Audit Report
+                </a>
+                <a href="/firewall" class="btn-report btn-secondary-report">
+                    🛡️ Verify in Firewall Console
+                </a>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- PLAYBOOK CATALOG -->
+    <section class="panel">
+        <div class="panel-title">
+            <h2>⚡ Automated Incident Response Playbooks</h2>
+            <p>Select a pre-configured playbook to execute multi-stage automated containment across network, identity, and SIEM layers.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+            {% for pb in playbooks %}
+            <div style="background: #090f1d; border: 1px solid #1a2744; border-radius: 10px; padding: 22px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <code>{{ pb.id }}</code>
+                        <span class="badge {{ 'high' if pb.severity == 'CRITICAL' or pb.severity == 'HIGH' else 'medium' }}">{{ pb.severity }}</span>
+                    </div>
+                    <h3 style="font-size: 16px; color: #f8fafc; margin-bottom: 8px;">{{ pb.name }}</h3>
+                    <p style="font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 15px;">{{ pb.description }}</p>
+
+                    <!-- STEPS LIST -->
+                    <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid #1a2744; border-radius: 6px; padding: 12px; margin-bottom: 20px;">
+                        <strong style="font-size: 12px; color: #38bdf8; display: block; margin-bottom: 8px;">Automated Stages:</strong>
+                        <ol style="margin: 0; padding-left: 18px; font-size: 12px; color: #cbd5e1; line-height: 1.6;">
+                            {% for s in pb.steps %}
+                            <li>{{ s.action }}</li>
+                            {% endfor %}
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- PLAYBOOK RUNNER FORM -->
+                <form method="POST" action="/playbooks/run">
+                    <input type="hidden" name="playbook_id" value="{{ pb.id }}">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" name="target_ip" placeholder="Target IP (e.g. 192.168.1.52)" required style="flex: 1; padding: 8px 12px; background: #060a14; border: 1px solid #1a2744; color: white; border-radius: 6px; font-size: 12px;">
+                        <button type="submit" class="btn-sm btn-danger-sm" style="padding: 8px 16px;">
+                            ⚡ Run Playbook
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- SOAR EXECUTION AUDIT HISTORY -->
+    <section class="panel">
+        <div class="panel-title">
+            <h2>📜 SOAR Orchestration Execution Log ({{ soar_history|length }})</h2>
+            <p>Audit trail of automated containment workflows triggered by SOC operators</p>
+        </div>
+
+        {% if soar_history %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Execution ID</th>
+                        <th>Playbook ID & Name</th>
+                        <th>Target Host</th>
+                        <th>Severity</th>
+                        <th>Orchestration Status</th>
+                        <th>Timestamp (UTC)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in soar_history %}
+                    <tr>
+                        <td><code>{{ h.execution_id }}</code></td>
+                        <td><strong>{{ h.playbook_id }}</strong>: {{ h.playbook_name }}</td>
+                        <td><strong class="high"><code>{{ h.target_ip }}</code></strong></td>
+                        <td><span class="badge {{ h.severity|lower }}">{{ h.severity }}</span></td>
+                        <td><span class="badge low">{{ h.status }}</span></td>
+                        <td><small>{{ h.timestamp }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color: #64748b; text-align: center; padding: 20px;">No SOAR playbooks have been executed yet.</p>
+        {% endif %}
+    </section>
+
+    <footer>
+        SentinelX • Security Orchestration, Automation & Response (SOAR) Engine
+    </footer>
+</div>
+
+</body>
+</html>

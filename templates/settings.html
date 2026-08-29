@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentinelX | SOC Integrations & Webhook Alerts</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>🛡 SentinelX</h2>
+    <p>AI Threat Detection</p>
+    <a href="/" class="nav">📊 Dashboard</a>
+    <a href="/map" target="_blank" class="nav">🌍 Live Threat Map</a>
+    <a href="/#analyze-section" class="nav">🔍 Threat Detection</a>
+    <a href="/recon" class="nav">🌐 Recon Scanner</a>
+    <a href="/simulate" class="nav">⚡ Attack Simulator</a>
+    <a href="/firewall" class="nav">🛡️ Firewall & Blocklist</a>
+    <a href="/logs" class="nav">📋 Security Logs</a>
+    <a href="/reports" class="nav">📑 Security Reports</a>
+    <a href="/settings" class="nav active">⚙️ SOC Settings</a>
+</div>
+
+<div class="main">
+    <header>
+        <div>
+            <h1>SOC Integrations & Webhook Notification Center</h1>
+            <p>Connect real-time SIEM alerts, Discord, Slack, and automated incident dispatch channels</p>
+        </div>
+        <div class="online">
+            ● ALERT PIPELINE READY
+        </div>
+    </header>
+
+    {% if message %}
+    <div class="alert-banner {{ 'alert-success' if success else 'alert-danger' }}">
+        {{ message }}
+    </div>
+    {% endif %}
+
+    <!-- STATS -->
+    <div class="stats">
+        <div class="stat">
+            <span>WEBHOOK STATUS</span>
+            <strong class="{{ 'low' if config.enabled else 'medium' }}">{{ 'ENABLED' if config.enabled else 'STANDBY' }}</strong>
+        </div>
+        <div class="stat">
+            <span>TOTAL ALERTS DISPATCHED</span>
+            <strong>{{ config.alerts_sent|default(0) }}</strong>
+        </div>
+        <div class="stat">
+            <span>MINIMUM SEVERITY</span>
+            <strong class="high">{{ config.min_severity|default('HIGH') }}</strong>
+        </div>
+        <div class="stat">
+            <span>DISPATCH PROTOCOL</span>
+            <strong>HTTPS REST / JSON</strong>
+        </div>
+    </div>
+
+    <!-- CONFIGURATION PANEL -->
+    <section class="panel">
+        <div class="panel-title">
+            <h2>📢 Configure Webhook Endpoint (Discord / Slack / SIEM)</h2>
+            <p>Enter an incoming webhook URL to automatically receive formatted security cards when High-Severity threats are detected.</p>
+        </div>
+
+        <form method="POST" action="/settings" class="firewall-form">
+            <div class="form-row">
+                <div class="input-box" style="flex: 3;">
+                    <label>Incoming Webhook URL</label>
+                    <input type="url" name="webhook_url" placeholder="https://discord.com/api/webhooks/... or https://hooks.slack.com/..." value="{{ config.webhook_url }}" required>
+                </div>
+                <div class="input-box" style="flex: 1;">
+                    <label>Alert Trigger Filter</label>
+                    <select name="min_severity" class="form-select">
+                        <option value="HIGH" {% if config.min_severity == 'HIGH' %}selected{% endif %}>Critical / High Threats (>= 70)</option>
+                        <option value="MEDIUM" {% if config.min_severity == 'MEDIUM' %}selected{% endif %}>Medium & High (>= 40)</option>
+                        <option value="ALL" {% if config.min_severity == 'ALL' %}selected{% endif %}>All Activity (Verbose)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 15px; align-items: center; margin-top: 10px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #cbd5e1; font-size: 14px;">
+                    <input type="checkbox" name="enabled" value="1" {% if config.enabled %}checked{% endif %} style="width: 18px; height: 18px;">
+                    Enable Automated Incident Webhook Dispatch
+                </label>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 20px;">
+                <button type="submit" class="btn-primary-report">
+                    💾 Save Webhook Configuration
+                </button>
+            </div>
+        </form>
+
+        <!-- TEST WEBHOOK BUTTON -->
+        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #1a2744;">
+            <h3 style="font-size: 15px; color: #38bdf8; margin-bottom: 10px;">⚡ Test Notification Delivery</h3>
+            <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">Send an immediate sample payload to verify connectivity with your webhook listener.</p>
+            <form method="POST" action="/settings/test">
+                <button type="submit" class="btn-report btn-secondary-report">
+                    🔔 Send Verification Test Ping
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- DISPATCH AUDIT HISTORY TABLE -->
+    <section class="panel">
+        <div class="panel-title">
+            <h2>📜 Recent Webhook Dispatch Log</h2>
+            <p>Audit trail of outbound security incident notifications</p>
+        </div>
+
+        {% if config.history %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Target Host</th>
+                        <th>Severity</th>
+                        <th>Risk Score</th>
+                        <th>Delivery Status</th>
+                        <th>Delivery Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in config.history %}
+                    <tr>
+                        <td><small>{{ h.timestamp }}</small></td>
+                        <td><strong><code>{{ h.ip }}</code></strong></td>
+                        <td><span class="badge {{ h.level|lower }}">{{ h.level }}</span></td>
+                        <td><strong>{{ h.risk }}/100</strong></td>
+                        <td>
+                            <span class="badge {{ 'low' if h.delivery_status == 'SUCCESS' else ('medium' if h.delivery_status == 'SIMULATED' else 'high') }}">
+                                {{ h.delivery_status }}
+                            </span>
+                        </td>
+                        <td style="font-size: 12px; color: #94a3b8;">{{ h.delivery_note }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color: #64748b; text-align: center; padding: 20px;">No webhook alerts have been dispatched yet.</p>
+        {% endif %}
+    </section>
+
+    <footer>
+        SentinelX • SOC Integration, Telemetry Webhooks & SIEM Notification Engine
+    </footer>
+</div>
+
+</body>
+</html>

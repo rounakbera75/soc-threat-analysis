@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentinelX | Security Audit Report - {{ result.source_ip }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        .audit-container {
+            max-width: 920px;
+            margin: 0 auto;
+            background: #0f1a30;
+            border: 1px solid #24355a;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #24355a;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .report-header h1 {
+            font-size: 26px;
+            color: #38bdf8;
+            margin-bottom: 6px;
+        }
+        .report-meta {
+            text-align: right;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        .report-section {
+            margin-bottom: 30px;
+        }
+        .report-section h3 {
+            color: #f8fafc;
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #1e2d4a;
+        }
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            background: #090f1d;
+            border: 1px solid #1a2744;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .meta-item span {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .meta-item strong {
+            font-size: 15px;
+            color: #f1f5f9;
+        }
+        .remediation-list {
+            list-style: none;
+            padding: 0;
+        }
+        .remediation-item {
+            background: #090f1d;
+            border-left: 4px solid #38bdf8;
+            border-radius: 6px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+        }
+        .remediation-item h4 {
+            color: #38bdf8;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .remediation-item p {
+            color: #cbd5e1;
+            font-size: 13px;
+            margin: 0;
+        }
+        .remediation-item.danger {
+            border-left-color: #ef4444;
+        }
+        .remediation-item.danger h4 {
+            color: #ef4444;
+        }
+        .remediation-item.warning {
+            border-left-color: #f59e0b;
+        }
+        .remediation-item.warning h4 {
+            color: #f59e0b;
+        }
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        @media print {
+            .sidebar, .action-bar, footer, #hostMap {
+                display: none !important;
+            }
+            .main {
+                margin-left: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+                color: black !important;
+            }
+            .audit-container {
+                border: 1px solid #ccc !important;
+                box-shadow: none !important;
+                background: white !important;
+                color: black !important;
+                padding: 20px !important;
+            }
+            .report-header h1 {
+                color: #0284c7 !important;
+            }
+            .meta-grid, .result-card, .remediation-item, .reasons, .stat {
+                background: #f8fafc !important;
+                border: 1px solid #cbd5e1 !important;
+                color: black !important;
+            }
+            .meta-item strong, .result-card strong, .remediation-item p {
+                color: black !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>🛡 SentinelX</h2>
+    <p>AI Threat Detection</p>
+    <a href="/" class="nav">📊 Dashboard</a>
+    <a href="/map" target="_blank" class="nav">🌍 Live Threat Map</a>
+    <a href="/ai-models" class="nav">🤖 AI Models & XAI</a>
+    <a href="/mitre" class="nav">🎯 MITRE ATT&CK Matrix</a>
+    <a href="/playbooks" class="nav">⚡ SOAR Playbooks</a>
+    <a href="/#analyze-section" class="nav">🔍 Threat Detection</a>
+    <a href="/recon" class="nav">🌐 Recon Scanner</a>
+    <a href="/simulate" class="nav">💥 Attack Simulator</a>
+    <a href="/firewall" class="nav">🛡️ Firewall & Blocklist</a>
+    <a href="/logs" class="nav">📋 Security Logs</a>
+    <a href="/reports" class="nav active">📑 Security Reports</a>
+    <a href="/settings" class="nav">⚙️ SOC Settings</a>
+</div>
+
+<div class="main">
+    <div class="action-bar">
+        <a href="/" class="btn-report btn-secondary-report">← Back to Dashboard</a>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            {% if is_blocked %}
+            <span class="badge high">🛡️ QUARANTINED IN FIREWALL</span>
+            {% else %}
+            <form method="POST" action="/firewall/block" style="display:inline;">
+                <input type="hidden" name="ip" value="{{ result.source_ip }}">
+                <input type="hidden" name="threat_level" value="{{ result.level }}">
+                <input type="hidden" name="reason" value="Quarantine from Incident Audit #RPT-{{ result.source_ip | replace('.', '') }}">
+                <button type="submit" class="btn-sm btn-danger-sm">🚫 Quarantine Host</button>
+            </form>
+            {% endif %}
+            <a href="/recon?ip={{ result.source_ip }}" class="btn-report btn-secondary-report">🌐 Recon Scan</a>
+            <a href="/export/report/{{ result.source_ip }}" class="btn-report btn-secondary-report">📥 Download JSON</a>
+            <button type="button" class="btn-report btn-primary-report" onclick="window.print()">🖨️ Print / Save PDF</button>
+        </div>
+    </div>
+
+    <div class="audit-container">
+        <div class="report-header">
+            <div>
+                <h1>🛡 Security Audit & Incident Report</h1>
+                <p style="color: #94a3b8; font-size: 14px;">SentinelX Autonomous Threat Intelligence & SIEM Audit</p>
+            </div>
+            <div class="report-meta">
+                <div><strong>Report ID:</strong> RPT-{{ result.source_ip | replace('.', '') }}-2026</div>
+                <div><strong>Generated:</strong> {{ generated_at }}</div>
+                <div><strong>Engine:</strong> SentinelX AI (Isolation Forest + OSINT Threat Intel)</div>
+            </div>
+        </div>
+
+        <!-- TARGET PROFILE & OSINT -->
+        <div class="report-section">
+            <h3>🎯 Target Endpoint Profile & OSINT Threat Intel</h3>
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <span>Target IP Address</span>
+                    <strong><code>{{ result.source_ip }}</code></strong>
+                </div>
+                <div class="meta-item">
+                    <span>Incident Severity & Risk</span>
+                    <strong class="{{ result.level|lower }}">{{ result.level }} SEVERITY ({{ result.risk }}/100)</strong>
+                </div>
+                <div class="meta-item">
+                    <span>Geolocation Origin</span>
+                    <strong>{{ result.geo.flag }} {{ result.geo.country }} ({{ result.geo.city }}, {{ result.geo.region }})</strong>
+                </div>
+                <div class="meta-item">
+                    <span>ISP / Network Provider</span>
+                    <strong>{{ result.geo.isp }}</strong>
+                </div>
+                <div class="meta-item">
+                    <span>Autonomous System (ASN)</span>
+                    <strong>{{ result.geo.as }}</strong>
+                </div>
+                <div class="meta-item">
+                    <span>Tor Relay / Anonymizer Status</span>
+                    <strong class="{{ 'high' if result.geo.is_tor else 'low' }}">
+                        {{ 'YES (TOR EXIT NODE)' if result.geo.is_tor else 'NO (DIRECT WAN HOST)' }}
+                    </strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- MINI ORIGIN MAP -->
+        <div class="report-section">
+            <h3>🌍 Geolocation Origin Coordinates</h3>
+            <div id="hostMap" style="height: 200px; width: 100%; border-radius: 8px; border: 1px solid #1a2744;"></div>
+        </div>
+
+        <!-- TELEMETRY & ML -->
+        <div class="report-section">
+            <h3>📊 Telemetry & Machine Learning Anomaly Detection</h3>
+            <div class="result-grid">
+                <div class="result-card">
+                    <span>FAILED LOGINS</span>
+                    <strong>{{ result.failed_attempts }}</strong>
+                </div>
+                <div class="result-card">
+                    <span>REQUEST VOLUME</span>
+                    <strong>{{ result.request_count }} req/min</strong>
+                </div>
+                <div class="result-card">
+                    <span>UNUSUAL HOUR</span>
+                    <strong>{{ 'YES (Off-Hours)' if result.unusual_hour == 1 or result.unusual_hour == '1' else 'NO (Normal)' }}</strong>
+                </div>
+                <div class="result-card">
+                    <span>NETWORK LOAD</span>
+                    <strong>{{ result.network_activity }} KB/s</strong>
+                </div>
+                <div class="result-card" style="grid-column: span 4;">
+                    <span>AI ISOLATION FOREST CLASSIFICATION</span>
+                    <strong class="{{ 'high' if result.ml_anomaly else 'low' }}">
+                        {{ result.ml_verdict }} ({{ result.ml_confidence }}% Anomaly Probability)
+                    </strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- DETECTION REASONS -->
+        <div class="report-section">
+            <h3>⚠ Behavioral Risk Factors & Attack Signatures</h3>
+            <div class="reasons">
+                <ul>
+                    {% for reason in result.reasons %}
+                    <li>{{ reason }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- MITRE ATT&CK FRAMEWORK MAPPING -->
+        {% if result.mitre_mappings %}
+        <div class="report-section">
+            <h3>🎯 MITRE ATT&CK® Tactical Mapping</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                {% for m in result.mitre_mappings %}
+                <div style="background: #090f1d; border: 1px solid #1a2744; border-left: 3px solid #38bdf8; border-radius: 6px; padding: 12px 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <strong style="color: #f8fafc; font-size: 13px;"><code>{{ m.id }}</code> • {{ m.name }}</strong>
+                        <span class="badge low">{{ m.tactic }}</span>
+                    </div>
+                    <p style="font-size: 12px; color: #94a3b8; margin: 0 0 6px 0;">{{ m.description }}</p>
+                    <div style="font-size: 11px; color: #fbbf24;">
+                        <strong>Key Mitigation:</strong> {{ m.mitigations[0].name }} ({{ m.mitigations[0].desc }})
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- RECOMMENDED REMEDIATION -->
+        <div class="report-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="margin: 0; padding: 0; border: none;">🛠 Recommended SOC Mitigation & Containment Commands</h3>
+                <form method="POST" action="/playbooks/run" style="display: inline;">
+                    <input type="hidden" name="playbook_id" value="{{ 'PB-BRUTE-01' if result.failed_attempts >= 5 else ('PB-DDOS-02' if result.request_count >= 250 else 'PB-EXFIL-03') }}">
+                    <input type="hidden" name="target_ip" value="{{ result.source_ip }}">
+                    <button type="submit" class="btn-sm btn-danger-sm" style="padding: 6px 14px;">
+                        ⚡ Trigger Automated SOAR Playbook
+                    </button>
+                </form>
+            </div>
+            <div class="remediation-list">
+                {% if result.risk >= 70 or result.ml_anomaly %}
+                <div class="remediation-item danger">
+                    <h4>1. Immediate Firewall Ingress Block (Linux iptables / Windows netsh)</h4>
+                    <p>Linux iptables command: <code>iptables -A INPUT -s {{ result.source_ip }} -j DROP</code></p>
+                    <p style="margin-top: 4px;">Windows Defender rule: <code>netsh advfirewall firewall add rule name="SentinelX_Block_{{ result.source_ip }}" dir=in action=block remoteip={{ result.source_ip }}</code></p>
+                </div>
+                <div class="remediation-item danger">
+                    <h4>2. Session Termination & Credential Invalidation</h4>
+                    <p>Revoke active OAuth tokens and invalidate session cookies for associated accounts originating from {{ result.geo.country }}.</p>
+                </div>
+                <div class="remediation-item warning">
+                    <h4>3. SOC Incident Escalation & Forensics</h4>
+                    <p>Flagged by AI Isolation Forest. Capture full packet pcap and quarantine subnet <code>{{ result.geo.as }}</code>.</p>
+                </div>
+                {% elif result.risk >= 40 %}
+                <div class="remediation-item warning">
+                    <h4>1. Rate Limiting & CAPTCHA Enforcement</h4>
+                    <p>Enforce strict IP rate limiting (max 30 req/min) and prompt multi-factor authentication (MFA).</p>
+                </div>
+                <div class="remediation-item">
+                    <h4>2. Enhanced Audit Logging</h4>
+                    <p>Enable verbose debug packet captures and monitor source IP for 24-hour quarantine period.</p>
+                </div>
+                {% else %}
+                <div class="remediation-item">
+                    <h4>1. Standard Continuous Monitoring</h4>
+                    <p>No immediate containment needed. Host verified as normal baseline traffic.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        SentinelX • Cyber Security Threat Monitoring & Audit System • Confidential Document
+    </footer>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const mapEl = document.getElementById('hostMap');
+    if (mapEl && typeof L !== 'undefined') {
+        const lat = {{ result.geo.lat|default(20.0) }};
+        const lon = {{ result.geo.lon|default(0.0) }};
+        const map = L.map('hostMap', { zoomControl: false }).setView([lat, lon], 5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; CartoDB',
+            maxZoom: 18
+        }).addTo(map);
+
+        L.circleMarker([lat, lon], {
+            radius: 8,
+            fillColor: '{{ "#ef4444" if result.level == "HIGH" else ("#f59e0b" if result.level == "MEDIUM" else "#10b981") }}',
+            color: '#ffffff',
+            weight: 2,
+            fillOpacity: 0.9
+        }).addTo(map).bindPopup('<strong>{{ result.geo.flag }} {{ result.source_ip }}</strong><br>{{ result.geo.city }}, {{ result.geo.country }}').openPopup();
+    }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentinelX | MITRE ATT&CK® Threat Matrix Navigator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>🛡 SentinelX</h2>
+    <p>AI Threat Detection</p>
+    <a href="/" class="nav">📊 Dashboard</a>
+    <a href="/map" target="_blank" class="nav">🌍 Live Threat Map</a>
+    <a href="/ai-models" class="nav">🤖 AI Models & XAI</a>
+    <a href="/mitre" class="nav active">🎯 MITRE ATT&CK Matrix</a>
+    <a href="/playbooks" class="nav">⚡ SOAR Playbooks</a>
+    <a href="/#analyze-section" class="nav">🔍 Threat Detection</a>
+    <a href="/recon" class="nav">🌐 Recon Scanner</a>
+    <a href="/simulate" class="nav">💥 Attack Simulator</a>
+    <a href="/firewall" class="nav">🛡️ Firewall & Blocklist</a>
+    <a href="/logs" class="nav">📋 Security Logs</a>
+    <a href="/reports" class="nav">📑 Security Reports</a>
+    <a href="/settings" class="nav">⚙️ SOC Settings</a>
+</div>
+
+<div class="main">
+    <header>
+        <div>
+            <h1>MITRE ATT&CK® Enterprise Threat Matrix</h1>
+            <p>Tactics, Techniques, and Defensive Mitigation Playbooks aligned with the industry standard MITRE Framework</p>
+        </div>
+        <div class="online">
+            ● MITRE v14 ALIGNED
+        </div>
+    </header>
+
+    <!-- MATRIX OVERVIEW STATS -->
+    <div class="stats">
+        <div class="stat">
+            <span>MAPPED TACTICS</span>
+            <strong>5 TACTICS</strong>
+        </div>
+        <div class="stat">
+            <span>TECHNIQUES COVERED</span>
+            <strong>{{ mitre_matrix|length }} TECHNIQUES</strong>
+        </div>
+        <div class="stat">
+            <span>AUTOMATED MITIGATIONS</span>
+            <strong class="low">10 CONTROLS</strong>
+        </div>
+        <div class="stat">
+            <span>FRAMEWORK STANDARD</span>
+            <strong>ENTERPRISE ATT&CK</strong>
+        </div>
+    </div>
+
+    <!-- TACTICAL MATRIX TILES -->
+    <section class="panel">
+        <div class="panel-title">
+            <h2>🎯 Active Threat Techniques & Detection Triggers</h2>
+            <p>Techniques automatically mapped by SentinelX AI when anomalous telemetry is detected</p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            {% for t in mitre_matrix %}
+            <div style="background: #090f1d; border: 1px solid #1a2744; border-left: 4px solid #38bdf8; border-radius: 8px; padding: 22px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                    <div>
+                        <span class="badge low" style="margin-bottom: 6px;">{{ t.tactic }}</span>
+                        <h3 style="font-size: 17px; color: #f8fafc; margin: 4px 0;">
+                            <code>{{ t.id }}</code> • {{ t.name }}
+                        </h3>
+                    </div>
+                    <span class="badge high">ACTIVE DETECTION</span>
+                </div>
+
+                <p style="color: #cbd5e1; font-size: 13px; line-height: 1.6; margin-bottom: 15px;">
+                    {{ t.description }}
+                </p>
+
+                <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 6px; padding: 10px 14px; font-size: 12px; margin-bottom: 15px;">
+                    <strong style="color: #38bdf8;">⚡ Automated Sensor Triggers:</strong>
+                    <span style="color: #94a3b8; margin-left: 6px;">{{ t.detection_triggers }}</span>
+                </div>
+
+                <!-- MITIGATIONS -->
+                <div>
+                    <h4 style="font-size: 13px; color: #fbbf24; margin-bottom: 8px;">🛡️ Defensive Mitigation Controls:</h4>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        {% for m in t.mitigations %}
+                        <div style="font-size: 12px; color: #cbd5e1; display: flex; gap: 8px; align-items: center;">
+                            <span class="badge medium">{{ m.id }}</span>
+                            <strong>{{ m.name }}:</strong>
+                            <span style="color: #94a3b8;">{{ m.desc }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <footer>
+        SentinelX • MITRE ATT&CK® Enterprise Cybersecurity Knowledge Base & Detection Matrix
+    </footer>
+</div>
+
+</body>
+</html>

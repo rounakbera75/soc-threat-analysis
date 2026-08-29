@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentinelX | Security Reports & Case Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>🛡 SentinelX</h2>
+    <p>AI Threat Detection</p>
+    <a href="/" class="nav">📊 Dashboard</a>
+    <a href="/map" target="_blank" class="nav">🌍 Live Threat Map</a>
+    <a href="/#analyze-section" class="nav">🔍 Threat Detection</a>
+    <a href="/recon" class="nav">🌐 Recon Scanner</a>
+    <a href="/simulate" class="nav">⚡ Attack Simulator</a>
+    <a href="/firewall" class="nav">🛡️ Firewall & Blocklist</a>
+    <a href="/logs" class="nav">📋 Security Logs</a>
+    <a href="/reports" class="nav active">📑 Security Reports</a>
+    <a href="/settings" class="nav">⚙️ SOC Settings</a>
+</div>
+
+<div class="main">
+    <header>
+        <div>
+            <h1>Executive Security Threat Reports & SOC Cases</h1>
+            <p>Intelligence summary, threat classification, endpoint ranking, and incident case investigations</p>
+        </div>
+        <div class="online">
+            ● SYSTEM ONLINE
+        </div>
+    </header>
+
+    <!-- REPORT SUMMARY METRICS -->
+    <div class="stats">
+        <div class="stat">
+            <span>TOTAL MONITORED</span>
+            <strong>{{ total_count }}</strong>
+        </div>
+        <div class="stat">
+            <span>HIGH THREATS</span>
+            <strong class="high">{{ high_count }}</strong>
+        </div>
+        <div class="stat">
+            <span>MEDIUM RISKS</span>
+            <strong class="medium">{{ medium_count }}</strong>
+        </div>
+        <div class="stat">
+            <span>CLEAN / SAFE</span>
+            <strong class="low">{{ low_count }}</strong>
+        </div>
+    </div>
+
+    <!-- CHARTS SECTION -->
+    <div class="charts-grid">
+        <!-- TOP ATTACKERS BAR CHART -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>🚨 Highest Risk Endpoints</h3>
+                <span class="chart-tag">Top Anomalous Hosts</span>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="topAttackersChart"></canvas>
+            </div>
+        </div>
+
+        <!-- ATTACK VECTOR RADAR CHART -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>🎯 Attack Vector Distribution</h3>
+                <span class="chart-tag">Telemetry Vectors</span>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="vectorChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- REPORT ACTIONS PANEL -->
+    <section class="panel">
+        <div class="panel-title">
+            <h2>📑 Threat Report Generation & Export Hub</h2>
+            <p>Generate, print, or download security intelligence reports for SOC compliance and audit logs.</p>
+        </div>
+
+        <div class="report-toolbar" style="margin-top: 0; padding-top: 0; border-top: none;">
+            <div class="report-buttons">
+                <a href="/export/csv" class="btn-report btn-primary-report">
+                    📥 Download All Logs (CSV)
+                </a>
+                <a href="/export/json" class="btn-report btn-secondary-report">
+                    📥 Export Threat Intelligence (JSON)
+                </a>
+                <button type="button" class="btn-report btn-secondary-report" onclick="window.print()">
+                    🖨️ Print Executive Report (PDF)
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- INCIDENT CASE INVESTIGATION REGISTRY -->
+    <section class="panel">
+        <div class="panel-title">
+            <h2>📝 SOC Incident Investigation Cases ({{ incidents|length }})</h2>
+            <p>Active security cases with analyst investigation notes and containment lifecycle status</p>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Case ID</th>
+                        <th>Target IP</th>
+                        <th>Severity</th>
+                        <th>Lifecycle Status</th>
+                        <th>Analyst Notes</th>
+                        <th>Last Updated</th>
+                        <th>Quick Triage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inc in incidents %}
+                    <tr>
+                        <td><code>{{ inc.case_id }}</code></td>
+                        <td><strong><code>{{ inc.ip }}</code></strong></td>
+                        <td><span class="badge {{ inc.threat_level|lower }}">{{ inc.threat_level }}</span></td>
+                        <td>
+                            <span class="badge {{ 'high' if inc.status == 'Active Alert' else ('medium' if inc.status == 'Under Investigation' else 'low') }}">
+                                {{ inc.status }}
+                            </span>
+                        </td>
+                        <td style="text-align: left; font-size: 13px; max-width: 280px;">
+                            {{ inc.analyst_notes }}
+                        </td>
+                        <td><small>{{ inc.updated_at }}</small></td>
+                        <td>
+                            <div style="display: flex; gap: 4px; justify-content: center;">
+                                <a href="/report/{{ inc.ip }}" class="btn-sm btn-report-sm" target="_blank">📄 Report</a>
+                                <button type="button" class="btn-sm btn-action-sm" onclick="document.getElementById('edit-{{ inc.case_id }}').style.display = 'table-row';">✏️ Triage</button>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- INLINE TRIAGE EDIT ROW -->
+                    <tr id="edit-{{ inc.case_id }}" style="display: none; background: #070e1c;">
+                        <td colspan="7" style="padding: 15px 20px;">
+                            <form method="POST" action="/incidents" style="display: flex; gap: 12px; align-items: center; justify-content: space-between;">
+                                <input type="hidden" name="ip" value="{{ inc.ip }}">
+                                <div style="display: flex; gap: 10px; align-items: center; flex: 1;">
+                                    <label style="font-size: 12px; color: #94a3b8;">Status:</label>
+                                    <select name="status" class="form-select" style="max-width: 180px;">
+                                        <option value="Active Alert" {% if inc.status == 'Active Alert' %}selected{% endif %}>Active Alert</option>
+                                        <option value="Under Investigation" {% if inc.status == 'Under Investigation' %}selected{% endif %}>Under Investigation</option>
+                                        <option value="Contained" {% if inc.status == 'Contained' %}selected{% endif %}>Contained</option>
+                                        <option value="Resolved" {% if inc.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                                    </select>
+                                    <input type="text" name="notes" placeholder="Update analyst notes..." value="{{ inc.analyst_notes }}" style="flex: 1; padding: 8px 12px; background: #090f1d; border: 1px solid #1a2744; color: white; border-radius: 6px;">
+                                </div>
+                                <div style="display: flex; gap: 6px;">
+                                    <button type="submit" class="btn-sm btn-success-sm">💾 Save</button>
+                                    <button type="button" class="btn-sm btn-secondary-sm" onclick="document.getElementById('edit-{{ inc.case_id }}').style.display = 'none';">Cancel</button>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- INCIDENT THREAT REGISTRY TABLE -->
+    <section class="panel">
+        <div class="panel-title">
+            <h2>🚨 Threat Incident Registry</h2>
+            <p>Analyzed network endpoints with AI threat and ML anomaly scoring</p>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Source IP</th>
+                        <th>Failed Logins</th>
+                        <th>Request Volume</th>
+                        <th>Unusual Hour</th>
+                        <th>Network Load</th>
+                        <th>Risk Score</th>
+                        <th>Threat Level</th>
+                        <th>ML Isolation Forest</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in report_items %}
+                    <tr>
+                        <td><strong><code>{{ item.source_ip }}</code></strong></td>
+                        <td>{{ item.failed_attempts }}</td>
+                        <td>{{ item.request_count }}</td>
+                        <td>{{ 'YES' if item.unusual_hour == 1 else 'NO' }}</td>
+                        <td>{{ item.network_activity }}</td>
+                        <td><strong>{{ item.risk }}/100</strong></td>
+                        <td><span class="badge {{ item.level|lower }}">{{ item.level }}</span></td>
+                        <td>
+                            <span class="badge {{ 'high' if item.ml_anomaly else 'low' }}">
+                                {{ item.ml_verdict }} ({{ item.ml_confidence }}%)
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 4px; justify-content: center;">
+                                <a href="/report/{{ item.source_ip }}" class="btn-sm btn-report-sm" target="_blank">📄 Report</a>
+                                <a href="/analyze?source_ip={{ item.source_ip }}" class="btn-sm btn-action-sm">🔍 Inspect</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <footer>
+        SentinelX • Cyber Security Threat Monitoring & Incident Management System
+    </footer>
+</div>
+
+<!-- CHARTS INITIALIZATION -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Top Attackers Bar Chart
+    const topCanvas = document.getElementById("topAttackersChart");
+    if (topCanvas && typeof Chart !== 'undefined') {
+        const topLabels = {{ top_attackers.labels|tojson }};
+        const topScores = {{ top_attackers.scores|tojson }};
+
+        new Chart(topCanvas, {
+            type: 'bar',
+            data: {
+                labels: topLabels,
+                datasets: [{
+                    label: 'Risk Score (0-100)',
+                    data: topScores,
+                    backgroundColor: topScores.map(s => s >= 70 ? '#ef4444' : (s >= 40 ? '#f59e0b' : '#10b981')),
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#64748b' },
+                        max: 100
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8', font: { family: 'monospace' } }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    // Attack Vector Radar / Polar Chart
+    const vecCanvas = document.getElementById("vectorChart");
+    if (vecCanvas && typeof Chart !== 'undefined') {
+        new Chart(vecCanvas, {
+            type: 'polarArea',
+            data: {
+                labels: ['Failed Logins', 'Request Volume', 'Off-Hours', 'Bandwidth Load', 'ML Anomalies'],
+                datasets: [{
+                    data: {{ vector_stats|tojson }},
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.65)',
+                        'rgba(56, 189, 248, 0.65)',
+                        'rgba(245, 158, 11, 0.65)',
+                        'rgba(168, 85, 247, 0.65)',
+                        'rgba(16, 185, 129, 0.65)'
+                    ],
+                    borderWidth: 1,
+                    borderColor: '#0f1a30'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        grid: { color: 'rgba(255, 255, 255, 0.08)' },
+                        ticks: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#94a3b8', boxWidth: 10, font: { size: 10 } }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+
+</body>
+</html>

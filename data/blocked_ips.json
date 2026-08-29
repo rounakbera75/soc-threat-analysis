@@ -1,0 +1,38 @@
+[
+  {
+    "rule_id": "FW-BLK-373331",
+    "ip": "49.37.33.31",
+    "reason": "SOC Quarantine triggered from IP Analysis: MEDIUM Risk",
+    "threat_level": "MEDIUM",
+    "risk_score": null,
+    "status": "ACTIVE",
+    "blocked_by": "SentinelX SOC Engine",
+    "blocked_at": "2026-08-29 06:14:16 UTC",
+    "iptables_cmd": "iptables -A INPUT -s 49.37.33.31 -j DROP",
+    "netsh_cmd": "netsh advfirewall firewall add rule name=\"SentinelX_Block_49.37.33.31\" dir=in action=block remoteip=49.37.33.31"
+  },
+  {
+    "rule_id": "FW-BLK-681106",
+    "ip": "192.168.1.106",
+    "reason": "Simulated SSH / RDP Brute Force Attack Detected",
+    "threat_level": "LOW",
+    "risk_score": null,
+    "status": "ACTIVE",
+    "blocked_by": "SentinelX SOC Engine",
+    "blocked_at": "2026-08-29 06:07:23 UTC",
+    "iptables_cmd": "iptables -A INPUT -s 192.168.1.106 -j DROP",
+    "netsh_cmd": "netsh advfirewall firewall add rule name=\"SentinelX_Block_192.168.1.106\" dir=in action=block remoteip=192.168.1.106"
+  },
+  {
+    "rule_id": "FW-BLK-001952",
+    "ip": "192.168.1.52",
+    "reason": "Automated AI Isolation Forest Anomaly Detection (Critical High Risk)",
+    "threat_level": "HIGH",
+    "risk_score": 100,
+    "status": "ACTIVE",
+    "blocked_by": "SentinelX SOC Engine",
+    "blocked_at": "2026-08-20 01:25:00 UTC",
+    "iptables_cmd": "iptables -A INPUT -s 192.168.1.52 -j DROP",
+    "netsh_cmd": "netsh advfirewall firewall add rule name=\"SentinelX_Block_192.168.1.52\" dir=in action=block remoteip=192.168.1.52"
+  }
+]

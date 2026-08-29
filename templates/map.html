@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentinelX | Live Global Cyber Threat Map & SOC Wallboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background: #030712;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #e2e8f0;
+        }
+        .map-fullscreen-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        #fullThreatMap {
+            width: 100%;
+            height: 100%;
+            background: #040814;
+        }
+        /* HUD Top Bar */
+        .hud-topbar {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+        }
+        .hud-logo-box {
+            background: rgba(12, 20, 36, 0.9);
+            border: 1px solid #1a2744;
+            backdrop-filter: blur(8px);
+            padding: 12px 20px;
+            border-radius: 10px;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+        }
+        .hud-logo-box h2 {
+            margin: 0;
+            color: #38bdf8;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+        .hud-stats-row {
+            display: flex;
+            gap: 12px;
+            pointer-events: auto;
+        }
+        .hud-stat-pill {
+            background: rgba(12, 20, 36, 0.9);
+            border: 1px solid #1a2744;
+            backdrop-filter: blur(8px);
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        .hud-stat-pill span {
+            display: block;
+            font-size: 10px;
+            color: #64748b;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .hud-stat-pill strong {
+            font-size: 16px;
+            color: #38bdf8;
+        }
+        /* HUD Left Stream & Attackers Panel */
+        .hud-left-panel {
+            position: absolute;
+            top: 90px;
+            left: 20px;
+            bottom: 25px;
+            width: 320px;
+            background: rgba(12, 20, 36, 0.92);
+            border: 1px solid #1a2744;
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            padding: 18px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+        }
+        .hud-panel-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #f8fafc;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 8px;
+        }
+        .attack-feed-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 4px;
+        }
+        .attack-feed-item {
+            background: #080d1a;
+            border: 1px solid #1a2744;
+            border-left: 3px solid #ef4444;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 12px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .attack-feed-item:hover {
+            border-color: #38bdf8;
+            background: #0f1a30;
+        }
+        .attack-feed-item.medium {
+            border-left-color: #f59e0b;
+        }
+        .attack-feed-item.low {
+            border-left-color: #10b981;
+        }
+        .feed-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .feed-meta {
+            color: #94a3b8;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+        }
+        /* HUD Right Origin Ranking */
+        .hud-right-panel {
+            position: absolute;
+            top: 90px;
+            right: 20px;
+            width: 280px;
+            background: rgba(12, 20, 36, 0.92);
+            border: 1px solid #1a2744;
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            z-index: 1000;
+            padding: 18px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+        }
+        .country-rank-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #1a2744;
+            font-size: 13px;
+        }
+        .country-rank-bar {
+            height: 4px;
+            background: #ef4444;
+            border-radius: 2px;
+            margin-top: 4px;
+        }
+        /* HUD Controls Bottom */
+        .hud-bottom-bar {
+            position: absolute;
+            bottom: 25px;
+            left: 360px;
+            right: 320px;
+            background: rgba(12, 20, 36, 0.92);
+            border: 1px solid #1a2744;
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            z-index: 1000;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+        }
+        .hud-btn {
+            background: #1e293b;
+            color: #e2e8f0;
+            border: 1px solid #334155;
+            padding: 7px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .hud-btn:hover {
+            background: #38bdf8;
+            color: #040814;
+            border-color: #38bdf8;
+        }
+        .hud-btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+        .hud-btn-danger:hover {
+            background: #ef4444;
+            color: white;
+        }
+        /* Pulsing Target Beacons */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.33); opacity: 0.8; }
+            80%, 100% { transform: scale(2.5); opacity: 0; }
+        }
+        .pulse-marker {
+            position: relative;
+            width: 14px;
+            height: 14px;
+            background: #38bdf8;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        .pulse-marker::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            width: 22px;
+            height: 22px;
+            border: 2px solid #38bdf8;
+            border-radius: 50%;
+            animation: pulse-ring 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        .pulse-danger {
+            background: #ef4444;
+            border-color: white;
+        }
+        .pulse-danger::after {
+            border-color: #ef4444;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="map-fullscreen-container">
+    <!-- TOP HUD BAR -->
+    <div class="hud-topbar">
+        <div class="hud-logo-box">
+            <h2>🛡️ SentinelX Global Threat Sphere</h2>
+            <div class="online">● SOC WALLBOARD LIVE</div>
+            <a href="/" class="hud-btn" style="pointer-events: auto;">← Exit to Dashboard</a>
+        </div>
+
+        <div class="hud-stats-row">
+            <div class="hud-stat-pill">
+                <span>INTERCEPTED ATTACKS</span>
+                <strong class="high" id="hudAttackCount">{{ total_attacks|default(142) }}</strong>
+            </div>
+            <div class="hud-stat-pill">
+                <span>ACTIVE THREAT ACTORS</span>
+                <strong id="hudThreatActors">{{ threat_actors_count|default(18) }}</strong>
+            </div>
+            <div class="hud-stat-pill">
+                <span>FIREWALL QUARANTINES</span>
+                <strong class="high">{{ blocked_count|default(4) }}</strong>
+            </div>
+            <div class="hud-stat-pill">
+                <span>TARGET DATACENTER</span>
+                <strong class="low">🛡️ US-EAST-SOC (ACTIVE)</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEFT HUD: LIVE ATTACK STREAM FEED -->
+    <div class="hud-left-panel">
+        <div class="hud-panel-title">
+            <span>⚡ Live Telemetry Feed</span>
+            <small style="color: #10b981; font-weight: bold;">● STREAMING</small>
+        </div>
+        <div class="attack-feed-list" id="attackFeed">
+            {% for item in attack_events %}
+            <div class="attack-feed-item {{ item.level|lower }}" onclick="focusHost({{ item.lat }}, {{ item.lon }}, '{{ item.ip }}', '{{ item.country }}', '{{ item.level }}', '{{ item.risk }}', '{{ item.vector }}');">
+                <div class="feed-header">
+                    <span>{{ item.flag }} <code>{{ item.ip }}</code></span>
+                    <span class="badge {{ item.level|lower }}">{{ item.level }}</span>
+                </div>
+                <div class="feed-meta">
+                    <span>{{ item.vector }}</span>
+                    <span>Risk: {{ item.risk }}/100</span>
+                </div>
+                <div style="font-size: 10px; color: #64748b; margin-top: 3px;">{{ item.city }}, {{ item.country }} • {{ item.isp }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- RIGHT HUD: TOP ATTACKING NATIONS -->
+    <div class="hud-right-panel">
+        <div class="hud-panel-title">
+            <span>🚩 Top Threat Origins</span>
+            <small style="color: #64748b;">GEO-IP RANK</small>
+        </div>
+        <div id="countryRankList">
+            {% for c in country_rankings %}
+            <div class="country-rank-row">
+                <div style="flex: 1;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>{{ c.flag }} <strong>{{ c.country }}</strong></span>
+                        <span style="color: #ef4444; font-weight: bold;">{{ c.count }} attacks</span>
+                    </div>
+                    <div class="country-rank-bar" style="width: {{ c.pct }}%;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #1a2744;">
+            <div style="font-size: 11px; color: #94a3b8; line-height: 1.5;">
+                <strong>🛡️ Target Protected Perimeter:</strong><br>
+                <span>Ashburn Datacenter (39.04° N, 77.48° W)</span><br>
+                <span>Automated BGP Ingress Protection Active</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM HUD CONTROLS -->
+    <div class="hud-bottom-bar">
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button type="button" class="hud-btn" onclick="toggleArcAnimation();" id="btnToggleArcs">
+                ✨ Toggle Flight Beams (ON)
+            </button>
+            <button type="button" class="hud-btn" onclick="triggerSimulatedAttackWave();">
+                ⚡ Inject Attack Pulse Wave
+            </button>
+            <button type="button" class="hud-btn" onclick="map.setView([25.0, 10.0], 2);">
+                🌐 Reset Global View
+            </button>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <a href="/simulate" class="hud-btn hud-btn-danger">💥 Attack Simulator</a>
+            <a href="/firewall" class="hud-btn">🛡️ Firewall Console</a>
+            <a href="/recon" class="hud-btn">🌐 Recon Scanner</a>
+        </div>
+    </div>
+
+    <!-- FULLSCREEN LEAFLET MAP CANVAS -->
+    <div id="fullThreatMap"></div>
+</div>
+
+<script>
+let map;
+let attackArcs = [];
+let arcsEnabled = true;
+const targetCoords = [39.0438, -77.4874]; // SOC Core Gateway (Ashburn, VA)
+const mapEvents = {{ attack_events|tojson }};
+
+document.addEventListener("DOMContentLoaded", function() {
+    map = L.map('fullThreatMap', {
+        zoomControl: false,
+        attributionControl: false
+    }).setView([28.0, 15.0], 3);
+
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    // Dark Matter tile layer
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd',
+        maxZoom: 18
+    }).addTo(map);
+
+    // Add Target SOC Hub Icon with pulsing beacon
+    const socIcon = L.divIcon({
+        className: 'custom-soc-marker',
+        html: '<div class="pulse-marker" title="SentinelX Protected SOC Datacenter"></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
+    });
+    L.marker(targetCoords, { icon: socIcon }).addTo(map).bindPopup(`
+        <div style="color: #040814; padding: 4px; font-family: sans-serif;">
+            <strong style="color: #0284c7;">🛡️ SentinelX Primary SOC Datacenter</strong><br>
+            <span>Location: Ashburn, United States</span><br>
+            <span style="color: #10b981; font-weight: bold;">Status: Perimeter Firewall Active</span>
+        </div>
+    `);
+
+    // Render Origin Threat Markers and Curved Laser Flight Arcs
+    renderAttackArcs();
+
+    // Periodic live attack stream animation
+    setInterval(simulateIncomingThreatPacket, 3500);
+});
+
+function renderAttackArcs() {
+    // Clear existing layers if any
+    attackArcs.forEach(layer => map.removeLayer(layer));
+    attackArcs = [];
+
+    mapEvents.forEach(item => {
+        const isHigh = item.level === 'HIGH';
+        const color = isHigh ? '#ef4444' : (item.level === 'MEDIUM' ? '#f59e0b' : '#10b981');
+
+        // Threat Origin Marker
+        const originIcon = L.divIcon({
+            className: 'threat-origin-marker',
+            html: `<div class="pulse-marker ${isHigh ? 'pulse-danger' : ''}"></div>`,
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
+        });
+
+        const originMarker = L.marker([item.lat, item.lon], { icon: originIcon }).addTo(map);
+        originMarker.bindPopup(`
+            <div style="color: #040814; font-family: sans-serif; font-size: 12px; padding: 4px;">
+                <strong style="color: #040814;">${item.flag} ${item.ip}</strong><br>
+                <span>${item.city}, ${item.country}</span><br>
+                <span>ISP: <strong>${item.isp}</strong></span><br>
+                <span>Vector: <strong>${item.vector}</strong></span><br>
+                <span>Threat Level: <strong style="color: ${color};">${item.level} (${item.risk}/100)</strong></span><br>
+                <div style="display: flex; gap: 6px; margin-top: 6px;">
+                    <a href="/analyze?source_ip=${item.ip}" style="color: #0284c7; text-decoration: underline; font-weight: bold;">Analyze</a> •
+                    <a href="/report/${item.ip}" target="_blank" style="color: #0284c7; text-decoration: underline;">Audit Report</a> •
+                    <a href="/recon?ip=${item.ip}" style="color: #0284c7; text-decoration: underline;">Recon</a>
+                </div>
+            </div>
+        `);
+        attackArcs.push(originMarker);
+
+        if (arcsEnabled) {
+            // Draw curved laser attack arc using intermediate quadratic bezier curve points
+            const midLat = (item.lat + targetCoords[0]) / 2 + Math.abs(item.lon - targetCoords[1]) * 0.12;
+            const midLon = (item.lon + targetCoords[1]) / 2;
+
+            const curvePoints = getQuadraticBezierPoints([item.lat, item.lon], [midLat, midLon], targetCoords, 30);
+            const arcPolyline = L.polyline(curvePoints, {
+                color: color,
+                weight: isHigh ? 2.5 : 1.8,
+                opacity: isHigh ? 0.75 : 0.5,
+                dashArray: '6, 8',
+                lineCap: 'round'
+            }).addTo(map);
+
+            attackArcs.push(arcPolyline);
+        }
+    });
+}
+
+function getQuadraticBezierPoints(p0, p1, p2, numPoints) {
+    const points = [];
+    for (let i = 0; i <= numPoints; i++) {
+        const t = i / numPoints;
+        const lat = (1 - t) * (1 - t) * p0[0] + 2 * (1 - t) * t * p1[0] + t * t * p2[0];
+        const lon = (1 - t) * (1 - t) * p0[1] + 2 * (1 - t) * t * p1[1] + t * t * p2[1];
+        points.push([lat, lon]);
+    }
+    return points;
+}
+
+function toggleArcAnimation() {
+    arcsEnabled = !arcsEnabled;
+    document.getElementById('btnToggleArcs').textContent = arcsEnabled ? '✨ Toggle Flight Beams (ON)' : '✨ Toggle Flight Beams (OFF)';
+    renderAttackArcs();
+}
+
+function focusHost(lat, lon, ip, country, level, risk, vector) {
+    map.flyTo([lat, lon], 5, { duration: 1.2 });
+}
+
+function triggerSimulatedAttackWave() {
+    const countEl = document.getElementById('hudAttackCount');
+    let count = parseInt(countEl.textContent || '142') + 5;
+    countEl.textContent = count;
+
+    // Flash map overlay effect
+    document.getElementById('fullThreatMap').style.filter = 'drop-shadow(0 0 15px rgba(239, 68, 68, 0.4))';
+    setTimeout(() => {
+        document.getElementById('fullThreatMap').style.filter = 'none';
+    }, 400);
+
+    simulateIncomingThreatPacket(true);
+}
+
+function simulateIncomingThreatPacket(forceHigh = false) {
+    const feed = document.getElementById('attackFeed');
+    if (!feed) return;
+
+    const sampleVectors = ['Layer 7 HTTP DDoS Flood', 'SSH Credential Brute Force', 'Port 3389 RDP Probe', 'Off-Hours Bulk Exfiltration', 'Tor Relay Reconnaissance'];
+    const sampleOrigins = [
+        { ip: '185.220.101.' + Math.floor(Math.random() * 250), flag: '🇷🇺', country: 'Russia', city: 'Saint Petersburg', isp: 'Selectel Datacenter', lat: 59.9343, lon: 30.3351 },
+        { ip: '103.251.167.' + Math.floor(Math.random() * 250), flag: '🇨🇳', country: 'China', city: 'Beijing', isp: 'China Unicom Backbone', lat: 39.9042, lon: 116.4074 },
+        { ip: '194.26.29.' + Math.floor(Math.random() * 250), flag: '🇳🇱', country: 'Netherlands', city: 'Rotterdam', isp: 'Serverion Hosting', lat: 51.9244, lon: 4.4777 },
+        { ip: '177.54.144.' + Math.floor(Math.random() * 250), flag: '🇧🇷', country: 'Brazil', city: 'Rio de Janeiro', isp: 'Embratel Telecom', lat: -22.9068, lon: -43.1729 }
+    ];
+
+    const pick = sampleOrigins[Math.floor(Math.random() * sampleOrigins.length)];
+    const vector = sampleVectors[Math.floor(Math.random() * sampleVectors.length)];
+    const isHigh = forceHigh || Math.random() > 0.4;
+    const level = isHigh ? 'HIGH' : 'MEDIUM';
+    const risk = isHigh ? Math.floor(Math.random() * 25) + 75 : Math.floor(Math.random() * 25) + 40;
+
+    const newFeedItem = document.createElement('div');
+    newFeedItem.className = `attack-feed-item ${level.toLowerCase()}`;
+    newFeedItem.onclick = () => focusHost(pick.lat, pick.lon, pick.ip, pick.country, level, risk, vector);
+    newFeedItem.innerHTML = `
+        <div class="feed-header">
+            <span>${pick.flag} <code>${pick.ip}</code></span>
+            <span class="badge ${level.toLowerCase()}">${level}</span>
+        </div>
+        <div class="feed-meta">
+            <span>${vector}</span>
+            <span>Risk: ${risk}/100</span>
+        </div>
+        <div style="font-size: 10px; color: #64748b; margin-top: 3px;">${pick.city}, ${pick.country} • ${pick.isp}</div>
+    `;
+
+    feed.insertBefore(newFeedItem, feed.firstChild);
+    if (feed.children.length > 25) {
+        feed.removeChild(feed.lastChild);
+    }
+}
+</script>
+
+</body>
+</html>

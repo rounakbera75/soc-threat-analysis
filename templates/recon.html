@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentinelX | Network Threat Recon Scanner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>🛡 SentinelX</h2>
+    <p>AI Threat Detection</p>
+    <a href="/" class="nav">📊 Dashboard</a>
+    <a href="/map" target="_blank" class="nav">🌍 Live Threat Map</a>
+    <a href="/#analyze-section" class="nav">🔍 Threat Detection</a>
+    <a href="/recon" class="nav active">🌐 Recon Scanner</a>
+    <a href="/simulate" class="nav">⚡ Attack Simulator</a>
+    <a href="/firewall" class="nav">🛡️ Firewall & Blocklist</a>
+    <a href="/logs" class="nav">📋 Security Logs</a>
+    <a href="/reports" class="nav">📑 Security Reports</a>
+    <a href="/settings" class="nav">⚙️ SOC Settings</a>
+</div>
+
+<div class="main">
+    <header>
+        <div>
+            <h1>Network Threat Recon & Attack Surface Scanner</h1>
+            <p>OSINT threat intelligence, Reverse DNS PTR resolution, ISP/ASN telemetry, and port vulnerability auditing</p>
+        </div>
+        <div class="online">
+            ● RECON ENGINE READY
+        </div>
+    </header>
+
+    <!-- SCAN FORM -->
+    <section class="panel">
+        <div class="panel-title">
+            <h2>🔍 Launch Endpoint Reconnaissance Audit</h2>
+            <p>Enter any internal or public IP address to inspect its Autonomous System (ASN), Reverse DNS, and open attack vectors.</p>
+        </div>
+
+        <form method="GET" action="/recon" class="firewall-form">
+            <div class="form-row">
+                <div class="input-box" style="flex: 3;">
+                    <label>Target Host IP Address</label>
+                    <input type="text" name="ip" placeholder="e.g. 192.168.1.52, 8.8.8.8, or 1.1.1.1" value="{{ scan_result.ip if scan_result else '' }}" required>
+                </div>
+                <div style="align-self: flex-end; margin-bottom: 15px;">
+                    <button type="submit" class="btn-primary-report" style="padding: 12px 24px; font-size: 14px;">
+                        🌐 Execute Deep Recon Scan
+                    </button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    {% if scan_result %}
+    <!-- RECON SCAN RESULTS -->
+    <section class="panel result-panel" style="border-left: 4px solid #38bdf8;">
+        <div class="panel-title">
+            <h2>🎯 Reconnaissance Intelligence Summary: <code>{{ scan_result.ip }}</code></h2>
+            <p>Scanned at {{ scan_result.scan_timestamp }} via SentinelX Recon Pipeline</p>
+        </div>
+
+        <!-- RECON METRIC CARDS -->
+        <div class="result-grid">
+            <div class="result-card">
+                <span>REVERSE DNS (PTR)</span>
+                <strong style="font-size: 14px; word-break: break-all;">{{ scan_result.hostname }}</strong>
+            </div>
+            <div class="result-card">
+                <span>GEOLOCATION</span>
+                <strong>{{ scan_result.geolocation.flag }} {{ scan_result.geolocation.country }}</strong>
+            </div>
+            <div class="result-card">
+                <span>AUTONOMOUS SYSTEM (ASN)</span>
+                <strong style="font-size: 13px;">{{ scan_result.geolocation.as }}</strong>
+            </div>
+            <div class="result-card">
+                <span>ATTACK SURFACE RISK</span>
+                <strong class="{{ 'high' if scan_result.attack_surface_score >= 7.0 else ('medium' if scan_result.attack_surface_score >= 4.0 else 'low') }}">
+                    {{ scan_result.attack_surface_score }} / 10 (CVSS)
+                </strong>
+            </div>
+        </div>
+
+        <!-- DETAILED OSINT INTEL -->
+        <div class="stats" style="margin-top: 20px; margin-bottom: 20px;">
+            <div class="stat">
+                <span>INTERNET SERVICE PROVIDER</span>
+                <strong style="font-size: 14px; color: #f8fafc;">{{ scan_result.geolocation.isp }}</strong>
+            </div>
+            <div class="stat">
+                <span>ORGANIZATION / SUBNET</span>
+                <strong style="font-size: 14px; color: #f8fafc;">{{ scan_result.geolocation.org }}</strong>
+            </div>
+            <div class="stat">
+                <span>TOR / ANONYMIZED NODE</span>
+                <strong class="{{ 'high' if scan_result.geolocation.is_tor else 'low' }}">
+                    {{ 'YES (TOR EXIT NODE)' if scan_result.geolocation.is_tor else 'NO (STANDARD HOST)' }}
+                </strong>
+            </div>
+            <div class="stat">
+                <span>THREAT CATEGORY</span>
+                <strong style="font-size: 13px; color: #f59e0b;">{{ scan_result.geolocation.threat_category }}</strong>
+            </div>
+        </div>
+
+        <!-- PORT VULNERABILITY AUDIT TABLE -->
+        <div style="margin-top: 25px;">
+            <h3 style="color: #f8fafc; font-size: 16px; margin-bottom: 12px;">🛡️ Port Surface & Known Vulnerability Audit</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Port #</th>
+                            <th>Service Protocol</th>
+                            <th>Port State</th>
+                            <th>Threat Exposure Risk</th>
+                            <th>Associated Vulnerability (CVE)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in scan_result.open_ports %}
+                        <tr>
+                            <td><strong><code>{{ p.port }}</code></strong></td>
+                            <td>{{ p.service }}</td>
+                            <td>
+                                <span class="badge {{ 'high' if p.status == 'OPEN' else ('medium' if p.status == 'FILTERED' else 'low') }}">
+                                    {{ p.status }}
+                                </span>
+                            </td>
+                            <td>{{ p.risk }}</td>
+                            <td><code>{{ p.cve }}</code></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ACTIONS TOOLBAR -->
+        <div class="report-toolbar">
+            <h3>⚡ Direct SOC Actions for {{ scan_result.ip }}</h3>
+            <div class="report-buttons">
+                <a href="/analyze?source_ip={{ scan_result.ip }}" class="btn-report btn-primary-report">
+                    🔍 Run Full AI Threat Analysis
+                </a>
+                <a href="/report/{{ scan_result.ip }}" class="btn-report btn-secondary-report" target="_blank">
+                    📄 View Incident Audit Report
+                </a>
+                <form method="POST" action="/firewall/block" style="display:inline;">
+                    <input type="hidden" name="ip" value="{{ scan_result.ip }}">
+                    <input type="hidden" name="threat_level" value="HIGH">
+                    <input type="hidden" name="reason" value="Quarantine from Recon Surface Audit (Score: {{ scan_result.attack_surface_score }}/10)">
+                    <button type="submit" class="btn-report btn-danger">
+                        🚫 Quarantine in Firewall
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <footer>
+        SentinelX • Autonomous Threat Reconnaissance & Network Surface Scanner
+    </footer>
+</div>
+
+</body>
+</html>

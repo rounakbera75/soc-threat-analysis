@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentinelX | Cyber Attack Simulator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>🛡 SentinelX</h2>
+    <p>AI Threat Detection</p>
+    <a href="/" class="nav">📊 Dashboard</a>
+    <a href="/map" target="_blank" class="nav">🌍 Live Threat Map</a>
+    <a href="/#analyze-section" class="nav">🔍 Threat Detection</a>
+    <a href="/recon" class="nav">🌐 Recon Scanner</a>
+    <a href="/simulate" class="nav active">⚡ Attack Simulator</a>
+    <a href="/firewall" class="nav">🛡️ Firewall & Blocklist</a>
+    <a href="/logs" class="nav">📋 Security Logs</a>
+    <a href="/reports" class="nav">📑 Security Reports</a>
+    <a href="/settings" class="nav">⚙️ SOC Settings</a>
+</div>
+
+<div class="main">
+    <header>
+        <div>
+            <h1>Live Cyber Attack & Threat Simulator</h1>
+            <p>Simulate real-world attack vectors to test AI threat detection, ML anomaly scoring, and SOC alerts</p>
+        </div>
+        <div class="online">
+            ● SIMULATOR READY
+        </div>
+    </header>
+
+    {% if sim_result %}
+    <!-- LIVE SIMULATION RESULT PANEL -->
+    <section class="panel result-panel" style="border-left: 4px solid {{ '#ef4444' if sim_result.level == 'HIGH' else ('#f59e0b' if sim_result.level == 'MEDIUM' else '#10b981') }};">
+        <div class="panel-title">
+            <h2>⚡ Simulation Execution Result: {{ sim_result.attack_name }}</h2>
+            <p>Telemetry injected for target IP <strong><code>{{ sim_result.source_ip }}</code></strong> and scored by Hybrid AI Engine.</p>
+        </div>
+
+        <div class="result-grid">
+            <div class="result-card">
+                <span>SIMULATED IP</span>
+                <strong><code>{{ sim_result.source_ip }}</code></strong>
+            </div>
+            <div class="result-card">
+                <span>HEURISTIC RISK</span>
+                <strong>{{ sim_result.risk }}/100</strong>
+            </div>
+            <div class="result-card">
+                <span>THREAT LEVEL</span>
+                <strong class="{{ sim_result.level|lower }}">{{ sim_result.level }}</strong>
+            </div>
+            <div class="result-card">
+                <span>ML ISOLATION FOREST</span>
+                <strong class="{{ 'high' if sim_result.ml_anomaly else 'low' }}">{{ sim_result.ml_verdict }} ({{ sim_result.ml_confidence }}%)</strong>
+            </div>
+        </div>
+
+        <!-- REASONS -->
+        <div class="reasons">
+            <h3>⚠ AI Detection Signatures</h3>
+            <ul>
+                {% for reason in sim_result.reasons %}
+                <li>{{ reason }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- ACTION TOOLBAR -->
+        <div class="report-toolbar">
+            <h3>⚡ Live SOC Response Actions</h3>
+            <div class="report-buttons">
+                {% if is_blocked %}
+                <button type="button" class="btn-report btn-secondary-report" disabled style="opacity: 0.7;">
+                    🛡️ Already Quarantined in Firewall
+                </button>
+                {% else %}
+                <form method="POST" action="/firewall/block" style="display: inline;">
+                    <input type="hidden" name="ip" value="{{ sim_result.source_ip }}">
+                    <input type="hidden" name="threat_level" value="{{ sim_result.level }}">
+                    <input type="hidden" name="reason" value="Simulated {{ sim_result.attack_name }} Attack Detected">
+                    <button type="submit" class="btn-report btn-danger">
+                        🚫 Immediately Quarantine in Firewall
+                    </button>
+                </form>
+                {% endif %}
+
+                <a href="/report/{{ sim_result.source_ip }}" class="btn-report btn-primary-report" target="_blank">
+                    📄 View Full Incident Audit Report
+                </a>
+                <a href="/logs" class="btn-report btn-secondary-report">
+                    📋 View in Ingested Logs
+                </a>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- PRESET ATTACK SCENARIO CARDS -->
+    <section class="panel">
+        <div class="panel-title">
+            <h2>💥 Launch Pre-Configured Attack Profiles</h2>
+            <p>Select a cyber attack scenario below to inject real telemetry and observe automated threat detection.</p>
+        </div>
+
+        <div class="scenario-grid">
+            <!-- SCENARIO 1: BRUTE FORCE -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <h3>💥 SSH / RDP Brute Force</h3>
+                    <span class="badge high">HIGH RISK</span>
+                </div>
+                <p>Simulates rapid repeated credential guessing attempts against authentication endpoints.</p>
+                <div class="scenario-metrics">
+                    <div>Failed Logins: <strong>28 attempts</strong></div>
+                    <div>Request Volume: <strong>65 req/min</strong></div>
+                    <div>Unusual Hour: <strong>NO (0)</strong></div>
+                    <div>Throughput: <strong>95 KB/s</strong></div>
+                </div>
+                <form method="POST" action="/simulate">
+                    <input type="hidden" name="attack_type" value="brute_force">
+                    <button type="submit" class="btn-scenario btn-danger">⚡ Launch Brute Force</button>
+                </form>
+            </div>
+
+            <!-- SCENARIO 2: DDOS FLOOD -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <h3>🌊 Layer 7 HTTP DDoS Flood</h3>
+                    <span class="badge high">CRITICAL</span>
+                </div>
+                <p>Simulates a botnet flooding web application endpoints with extreme request volume and bandwidth.</p>
+                <div class="scenario-metrics">
+                    <div>Failed Logins: <strong>2 attempts</strong></div>
+                    <div>Request Volume: <strong>1,450 req/min</strong></div>
+                    <div>Unusual Hour: <strong>NO (0)</strong></div>
+                    <div>Throughput: <strong>2,600 KB/s</strong></div>
+                </div>
+                <form method="POST" action="/simulate">
+                    <input type="hidden" name="attack_type" value="ddos_flood">
+                    <button type="submit" class="btn-scenario btn-danger">⚡ Launch DDoS Flood</button>
+                </form>
+            </div>
+
+            <!-- SCENARIO 3: DATA EXFILTRATION -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <h3>🕵️ Off-Hours Data Exfiltration</h3>
+                    <span class="badge high">HIGH RISK</span>
+                </div>
+                <p>Simulates lateral movement and unauthorized bulk database dump exfiltration during off-hours (02:00 AM).</p>
+                <div class="scenario-metrics">
+                    <div>Failed Logins: <strong>14 attempts</strong></div>
+                    <div>Request Volume: <strong>380 req/min</strong></div>
+                    <div>Unusual Hour: <strong>YES (1)</strong></div>
+                    <div>Throughput: <strong>1,850 KB/s</strong></div>
+                </div>
+                <form method="POST" action="/simulate">
+                    <input type="hidden" name="attack_type" value="data_exfiltration">
+                    <button type="submit" class="btn-scenario btn-danger">⚡ Launch Exfiltration</button>
+                </form>
+            </div>
+
+            <!-- SCENARIO 4: PORT RECON -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <h3>⚡ Network Port Scan & Recon</h3>
+                    <span class="badge medium">MEDIUM</span>
+                </div>
+                <p>Simulates automated Nmap/ZMap network reconnaissance and vulnerability probing.</p>
+                <div class="scenario-metrics">
+                    <div>Failed Logins: <strong>6 attempts</strong></div>
+                    <div>Request Volume: <strong>260 req/min</strong></div>
+                    <div>Unusual Hour: <strong>NO (0)</strong></div>
+                    <div>Throughput: <strong>380 KB/s</strong></div>
+                </div>
+                <form method="POST" action="/simulate">
+                    <input type="hidden" name="attack_type" value="port_scan">
+                    <button type="submit" class="btn-scenario btn-warning">⚡ Launch Port Scan</button>
+                </form>
+            </div>
+
+            <!-- SCENARIO 5: BENIGN USER -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <h3>🟢 Benign Authorized Session</h3>
+                    <span class="badge low">NORMAL / SAFE</span>
+                </div>
+                <p>Simulates legitimate employee login and normal dashboard navigation during standard business hours.</p>
+                <div class="scenario-metrics">
+                    <div>Failed Logins: <strong>0 attempts</strong></div>
+                    <div>Request Volume: <strong>15 req/min</strong></div>
+                    <div>Unusual Hour: <strong>NO (0)</strong></div>
+                    <div>Throughput: <strong>24 KB/s</strong></div>
+                </div>
+                <form method="POST" action="/simulate">
+                    <input type="hidden" name="attack_type" value="benign">
+                    <button type="submit" class="btn-scenario btn-success">⚡ Simulate Normal User</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- CUSTOM SCENARIO BUILDER -->
+    <section class="panel">
+        <div class="panel-title">
+            <h2>🛠️ Custom Attack Scenario Injector</h2>
+            <p>Specify customized threat metrics to inject synthetic events directly into the telemetry pipeline.</p>
+        </div>
+
+        <form method="POST" action="/simulate" class="firewall-form">
+            <input type="hidden" name="attack_type" value="custom">
+            <div class="form-row">
+                <div class="input-box">
+                    <label>Target IP Address</label>
+                    <input type="text" name="source_ip" placeholder="e.g. 10.0.8.99" required>
+                </div>
+                <div class="input-box">
+                    <label>Failed Login Attempts</label>
+                    <input type="number" name="failed_attempts" min="0" max="100" value="12" required>
+                </div>
+                <div class="input-box">
+                    <label>Request Count (req/min)</label>
+                    <input type="number" name="request_count" min="0" max="5000" value="350" required>
+                </div>
+                <div class="input-box">
+                    <label>Unusual Hour (Off-Hours)</label>
+                    <select name="unusual_hour" class="form-select">
+                        <option value="0">0 - Normal Business Hours</option>
+                        <option value="1">1 - Off-Hours (Night/Weekend)</option>
+                    </select>
+                </div>
+                <div class="input-box">
+                    <label>Network Throughput (KB/s)</label>
+                    <input type="number" name="network_activity" min="0" max="10000" value="650" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-danger">
+                🚀 Inject Custom Telemetry & Score
+            </button>
+        </form>
+    </section>
+
+    <footer>
+        SentinelX • Cyber Threat Simulator & AI Evaluation Framework
+    </footer>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentinelX | Firewall & IP Quarantine</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>🛡 SentinelX</h2>
+    <p>AI Threat Detection</p>
+    <a href="/" class="nav">📊 Dashboard</a>
+    <a href="/map" target="_blank" class="nav">🌍 Live Threat Map</a>
+    <a href="/#analyze-section" class="nav">🔍 Threat Detection</a>
+    <a href="/recon" class="nav">🌐 Recon Scanner</a>
+    <a href="/simulate" class="nav">⚡ Attack Simulator</a>
+    <a href="/firewall" class="nav active">🛡️ Firewall & Blocklist</a>
+    <a href="/logs" class="nav">📋 Security Logs</a>
+    <a href="/reports" class="nav">📑 Security Reports</a>
+    <a href="/settings" class="nav">⚙️ SOC Settings</a>
+</div>
+
+<div class="main">
+    <header>
+        <div>
+            <h1>Firewall & IP Quarantine Manager</h1>
+            <p>Active automated host containment and perimeter access control rules</p>
+        </div>
+        <div class="online">
+            ● FIREWALL ACTIVE
+        </div>
+    </header>
+
+    {% if message %}
+    <div class="alert-banner {{ 'alert-success' if success else 'alert-danger' }}">
+        {{ message }}
+    </div>
+    {% endif %}
+
+    <!-- STATS -->
+    <div class="stats">
+        <div class="stat">
+            <span>TOTAL BLOCKED IPS</span>
+            <strong class="high">{{ blocked_ips|length }}</strong>
+        </div>
+        <div class="stat">
+            <span>CONTAINMENT STATUS</span>
+            <strong class="low">ENFORCING</strong>
+        </div>
+        <div class="stat">
+            <span>HIGH SEVERITY RULES</span>
+            <strong class="high">{{ high_blocked_count }}</strong>
+        </div>
+        <div class="stat">
+            <span>AUTO MITIGATION</span>
+            <strong>ACTIVE</strong>
+        </div>
+    </div>
+
+    <!-- MANUAL IP BLOCK PANEL -->
+    <section class="panel">
+        <div class="panel-title">
+            <h2>🚫 Add IP to Quarantine Blacklist</h2>
+            <p>Manually enforce an immediate perimeter containment rule for a suspicious endpoint.</p>
+        </div>
+
+        <form method="POST" action="/firewall/block" class="firewall-form">
+            <div class="form-row">
+                <div class="input-box">
+                    <label>Target IP Address</label>
+                    <input type="text" name="ip" placeholder="e.g. 192.168.1.100" required>
+                </div>
+                <div class="input-box">
+                    <label>Severity Level</label>
+                    <select name="threat_level" class="form-select">
+                        <option value="HIGH">CRITICAL / HIGH</option>
+                        <option value="MEDIUM">MEDIUM</option>
+                        <option value="LOW">LOW</option>
+                    </select>
+                </div>
+                <div class="input-box" style="flex: 2;">
+                    <label>Containment Reason</label>
+                    <input type="text" name="reason" placeholder="e.g. Manual SOC quarantine for malicious brute force" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-danger">
+                🚫 Enforce Firewall Block
+            </button>
+        </form>
+    </section>
+
+    <!-- ACTIVE BLOCKED IPS TABLE -->
+    <section class="panel">
+        <div class="panel-title">
+            <h2>🛡️ Active Quarantined Endpoints ({{ blocked_ips|length }})</h2>
+            <p>Hosts actively blocked from accessing network resources and applications</p>
+        </div>
+
+        {% if blocked_ips %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rule ID</th>
+                        <th>Quarantined IP</th>
+                        <th>Severity</th>
+                        <th>Reason / Threat Trigger</th>
+                        <th>Blocked At (UTC)</th>
+                        <th>Containment Command</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in blocked_ips %}
+                    <tr>
+                        <td><code>{{ item.rule_id }}</code></td>
+                        <td><strong class="high"><code>{{ item.ip }}</code></strong></td>
+                        <td><span class="badge {{ item.threat_level|lower }}">{{ item.threat_level }}</span></td>
+                        <td style="text-align: left; max-width: 320px; font-size: 13px;">{{ item.reason }}</td>
+                        <td><small>{{ item.blocked_at }}</small></td>
+                        <td>
+                            <code class="cmd-code" title="Click to copy" onclick="navigator.clipboard.writeText('{{ item.iptables_cmd }}'); alert('Copied Linux iptables command!');">
+                                {{ item.iptables_cmd }}
+                            </code>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 6px; justify-content: center;">
+                                <a href="/report/{{ item.ip }}" class="btn-sm btn-report-sm" target="_blank">
+                                    📄 Report
+                                </a>
+                                <form method="POST" action="/firewall/unblock/{{ item.ip }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to lift the quarantine on {{ item.ip }}?');">
+                                    <button type="submit" class="btn-sm btn-unblock-sm">
+                                        ✅ Unblock
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color: #64748b; text-align: center; padding: 25px;">No IP addresses are currently in the quarantine blocklist.</p>
+        {% endif %}
+    </section>
+
+    <footer>
+        SentinelX • Autonomous Cyber Security Operations Center & Perimeter Firewall
+    </footer>
+</div>
+
+</body>
+</html>

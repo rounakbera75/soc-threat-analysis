@@ -1,0 +1,72 @@
+[
+  {
+    "case_id": "INC-373331-1416",
+    "ip": "49.37.33.31",
+    "status": "Contained",
+    "threat_level": "HIGH",
+    "risk_score": null,
+    "analyst_notes": "Host contained and blocked in firewall: SOC Quarantine triggered from IP Analysis: MEDIUM Risk",
+    "created_at": "2026-08-29 06:14:16 UTC",
+    "updated_at": "2026-08-29 06:14:16 UTC"
+  },
+  {
+    "case_id": "INC-681132-0726",
+    "ip": "192.168.1.132",
+    "status": "Active Alert",
+    "threat_level": "LOW",
+    "risk_score": 30,
+    "analyst_notes": "Automated AI detection triggered from SSH / RDP Brute Force simulation.",
+    "created_at": "2026-08-29 06:07:26 UTC",
+    "updated_at": "2026-08-29 06:07:32 UTC"
+  },
+  {
+    "case_id": "INC-681106-0717",
+    "ip": "192.168.1.106",
+    "status": "Contained",
+    "threat_level": "LOW",
+    "risk_score": 30,
+    "analyst_notes": "Host contained and blocked in firewall: Simulated SSH / RDP Brute Force Attack Detected",
+    "created_at": "2026-08-29 06:07:17 UTC",
+    "updated_at": "2026-08-29 06:07:23 UTC"
+  },
+  {
+    "case_id": "INC-998877-5948",
+    "ip": "10.99.88.77",
+    "status": "Resolved",
+    "threat_level": "HIGH",
+    "risk_score": null,
+    "analyst_notes": "Firewall containment rule lifted by SOC analyst.",
+    "created_at": "2026-08-29 05:59:48 UTC",
+    "updated_at": "2026-08-29 05:59:48 UTC"
+  },
+  {
+    "case_id": "INC-681111-5947",
+    "ip": "192.168.1.111",
+    "status": "Active Alert",
+    "threat_level": "LOW",
+    "risk_score": 30,
+    "analyst_notes": "Automated AI detection triggered from SSH / RDP Brute Force simulation.",
+    "created_at": "2026-08-29 05:59:47 UTC",
+    "updated_at": "2026-08-29 05:59:47 UTC"
+  },
+  {
+    "case_id": "INC-001952-0100",
+    "ip": "192.168.1.52",
+    "status": "Contained",
+    "threat_level": "HIGH",
+    "risk_score": 100,
+    "analyst_notes": "High volume brute force + data exfiltration detected off-hours. IP isolated and added to permanent firewall blocklist.",
+    "created_at": "2026-08-20 01:25:00 UTC",
+    "updated_at": "2026-08-20 01:30:00 UTC"
+  },
+  {
+    "case_id": "INC-001950-0230",
+    "ip": "192.168.1.50",
+    "status": "Under Investigation",
+    "threat_level": "MEDIUM",
+    "risk_score": 60,
+    "analyst_notes": "Multiple failed logins during unusual hour. Rate limiting enforced; monitoring edge logs.",
+    "created_at": "2026-08-20 02:35:00 UTC",
+    "updated_at": "2026-08-20 02:40:00 UTC"
+  }
+]

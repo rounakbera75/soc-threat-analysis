@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentinelX | Cyber Security SOC & Threat Intelligence Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Leaflet.js Dark Cyber Map CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>🛡 SentinelX</h2>
+    <p>AI Threat Detection</p>
+    <a href="/" class="nav active">📊 Dashboard</a>
+    <a href="/map" target="_blank" class="nav">🌍 Live Threat Map</a>
+    <a href="/#analyze-section" class="nav">🔍 Threat Detection</a>
+    <a href="/recon" class="nav">🌐 Recon Scanner</a>
+    <a href="/simulate" class="nav">⚡ Attack Simulator</a>
+    <a href="/firewall" class="nav">🛡️ Firewall & Blocklist</a>
+    <a href="/logs" class="nav">📋 Security Logs</a>
+    <a href="/reports" class="nav">📑 Security Reports</a>
+    <a href="/settings" class="nav">⚙️ SOC Settings</a>
+</div>
+
+<div class="main">
+    <header>
+        <div>
+            <h1>Security Operations Center & Threat Intelligence</h1>
+            <p>Real-Time Telemetry, Machine Learning Anomaly Scoring, Geolocation Mapping & Automated Containment</p>
+        </div>
+        <div class="online">
+            ● SIEM SENSORS ONLINE
+        </div>
+    </header>
+
+    {% if alert_msg %}
+    <div class="alert-banner {{ 'alert-success' if alert_success else 'alert-danger' }}">
+        {{ alert_msg }}
+    </div>
+    {% endif %}
+
+    <!-- TOP KPI STATS -->
+    <div class="stats">
+        <div class="stat">
+            <span>MONITORING STATUS</span>
+            <strong class="low">ACTIVE</strong>
+        </div>
+        <div class="stat">
+            <span>AI ML ENGINE</span>
+            <strong>ISOLATION FOREST (ONLINE)</strong>
+        </div>
+        <div class="stat">
+            <span>QUARANTINED IPS</span>
+            <strong class="high">{{ blocked_count }}</strong>
+        </div>
+        <div class="stat">
+            <span>GLOBAL INGRESS TELEMETRY</span>
+            <strong>{{ total_logs }} EVENTS</strong>
+        </div>
+    </div>
+
+    <!-- GLOBAL THREAT INTELLIGENCE MAP -->
+    <section class="panel" style="position: relative;">
+        <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h2>🌍 Global Cyber Attack Origin & Ingress Map</h2>
+                <p>Real-time geolocated threat actors, active attack flight paths, and protected SOC perimeter</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <a href="/map" target="_blank" class="btn-sm btn-report-sm" style="font-size: 13px; padding: 8px 16px;">
+                    🖵 Fullscreen SOC Wallboard
+                </a>
+            </div>
+        </div>
+
+        <div style="position: relative;">
+            <div id="attackMap" style="height: 360px; width: 100%; border-radius: 10px; border: 1px solid #1a2744; z-index: 1;"></div>
+            
+            <!-- MAP OVERLAY HUD BADGE -->
+            <div style="position: absolute; top: 12px; left: 12px; z-index: 500; background: rgba(12, 20, 36, 0.88); border: 1px solid #1a2744; border-radius: 6px; padding: 6px 14px; font-size: 11px; font-weight: bold; color: #38bdf8; backdrop-filter: blur(4px);">
+                🛡️ TARGET: ASHBURN SOC GATEWAY (ACTIVE DEFENSE)
+            </div>
+        </div>
+
+        <!-- LIVE STREAM TICKER BAR -->
+        <div style="margin-top: 15px; background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="badge high" style="font-size: 10px;">LIVE TELEMETRY</span>
+                <span id="liveTickerText" style="color: #cbd5e1;">⚡ Intercepting ingress packets from 🇷🇺 Russia, 🇨🇳 China, 🇳🇱 Netherlands & 🇧🇷 Brazil...</span>
+            </div>
+            <span style="color: #10b981; font-weight: bold;">● 60 FPS FLIGHT ARCS</span>
+        </div>
+    </section>
+
+    <!-- SOC CHARTS SECTION -->
+    <div class="charts-grid">
+        <!-- CHART 1: THREAT SEVERITY BREAKDOWN -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>📊 Threat Severity Distribution</h3>
+                <span class="chart-tag">AI Categorization</span>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="severityChart"></canvas>
+            </div>
+        </div>
+
+        <!-- CHART 2: NETWORK TRAFFIC & REQUEST ACTIVITY -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>📈 Network Traffic & Ingress Load</h3>
+                <span class="chart-tag">Live Sensor Telemetry</span>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="trafficChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- IP THREAT ANALYSIS SECTION -->
+    <section class="panel" id="analyze-section">
+        <div class="panel-title">
+            <div>
+                <h2>🔍 IP Threat & Anomaly Analysis</h2>
+                <p>Enter an IP address to evaluate heuristics, ML anomaly signatures, and firewall status.</p>
+            </div>
+        </div>
+
+        <form method="POST" action="/analyze">
+            <div class="input-box">
+                <label>Source IP Address</label>
+                <input
+                    type="text"
+                    name="source_ip"
+                    placeholder="e.g. 192.168.1.52, 192.168.1.50, or 192.168.1.10"
+                    value="{{ result.source_ip if result else '' }}"
+                    required
+                >
+            </div>
+
+            <button type="submit" id="analyze-btn">
+                🚨 ANALYZE THREAT
+            </button>
+        </form>
+    </section>
+
+    <!-- ANALYSIS RESULT -->
+    {% if result %}
+    <section class="panel result-panel" style="border-left: 4px solid {{ '#ef4444' if result.level == 'HIGH' else ('#f59e0b' if result.level == 'MEDIUM' else '#10b981') }};">
+        <div class="panel-title">
+            <div>
+                <h2>📊 Analysis Result & Threat Intelligence: <code>{{ result.source_ip }}</code></h2>
+                <p>Security assessment, Machine Learning verdict, and OSINT Geolocation</p>
+            </div>
+        </div>
+
+        <!-- METRIC CARDS -->
+        <div class="result-grid">
+            <div class="result-card">
+                <span>TARGET HOST</span>
+                <strong><code>{{ result.source_ip }}</code></strong>
+            </div>
+            <div class="result-card">
+                <span>HEURISTIC RISK</span>
+                <strong>{{ result.risk }}/100</strong>
+            </div>
+            <div class="result-card">
+                <span>THREAT LEVEL</span>
+                <strong class="{{ result.level|lower }}">{{ result.level }}</strong>
+            </div>
+            <div class="result-card">
+                <span>ML ISOLATION FOREST</span>
+                <strong class="{{ 'high' if result.ml_anomaly else 'low' }}">
+                    {{ result.ml_verdict }} ({{ result.ml_confidence }}%)
+                </strong>
+            </div>
+        </div>
+
+        <!-- GEOLOCATION & OSINT INTEL CARD -->
+        {% if result.geo %}
+        <div class="stats" style="margin-top: 15px; margin-bottom: 20px;">
+            <div class="stat">
+                <span>ORIGIN COUNTRY</span>
+                <strong style="font-size: 14px; color: #f8fafc;">{{ result.geo.flag }} {{ result.geo.country }} ({{ result.geo.city }})</strong>
+            </div>
+            <div class="stat">
+                <span>INTERNET SERVICE PROVIDER</span>
+                <strong style="font-size: 13px; color: #38bdf8;">{{ result.geo.isp }}</strong>
+            </div>
+            <div class="stat">
+                <span>AUTONOMOUS SYSTEM</span>
+                <strong style="font-size: 12px; color: #cbd5e1;">{{ result.geo.as }}</strong>
+            </div>
+            <div class="stat">
+                <span>TOR / PROXY NODE</span>
+                <strong class="{{ 'high' if result.geo.is_tor else 'low' }}">
+                    {{ 'YES (TOR RELAY)' if result.geo.is_tor else 'NO (DIRECT HOST)' }}
+                </strong>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- TELEMETRY BREAKDOWN -->
+        <div class="result-grid" style="margin-bottom: 20px;">
+            <div class="result-card">
+                <span>FAILED LOGINS</span>
+                <strong>{{ result.failed_attempts }}</strong>
+            </div>
+            <div class="result-card">
+                <span>REQUEST VOLUME</span>
+                <strong>{{ result.request_count }} req/min</strong>
+            </div>
+            <div class="result-card">
+                <span>UNUSUAL HOUR</span>
+                <strong>{{ 'YES (Off-Hours)' if result.unusual_hour == 1 or result.unusual_hour == '1' else 'NO (Normal)' }}</strong>
+            </div>
+            <div class="result-card">
+                <span>NETWORK THROUGHPUT</span>
+                <strong>{{ result.network_activity }} KB/s</strong>
+            </div>
+        </div>
+
+        <!-- FIREWALL CONTAINMENT STATUS BANNER -->
+        <div class="firewall-status-banner {{ 'banner-danger' if is_blocked else 'banner-safe' }}">
+            {% if is_blocked %}
+            <div>
+                <strong>🛡️ FIREWALL STATUS: QUARANTINED (BLOCKED)</strong>
+                <p style="font-size: 12px; margin-top: 2px;">This endpoint is actively contained and prohibited from inbound access.</p>
+            </div>
+            <form method="POST" action="/firewall/unblock/{{ result.source_ip }}" style="display:inline;">
+                <button type="submit" class="btn-sm btn-unblock-sm">✅ Lift Quarantine</button>
+            </form>
+            {% else %}
+            <div>
+                <strong>🛡️ FIREWALL STATUS: ACTIVE / ALLOWED</strong>
+                <p style="font-size: 12px; margin-top: 2px;">Endpoint is currently allowed. You can manually enforce quarantine below.</p>
+            </div>
+            <form method="POST" action="/firewall/block" style="display:inline;">
+                <input type="hidden" name="ip" value="{{ result.source_ip }}">
+                <input type="hidden" name="threat_level" value="{{ result.level }}">
+                <input type="hidden" name="reason" value="SOC Quarantine triggered from IP Analysis: {{ result.level }} Risk">
+                <button type="submit" class="btn-sm btn-danger-sm">🚫 Block / Quarantine IP</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <!-- DETECTION REASONS -->
+        <div class="reasons">
+            <h3>⚠ Behavioral Risk Factors & AI Signatures</h3>
+            <ul>
+                {% for reason in result.reasons %}
+                <li>{{ reason }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- REPORT GENERATION ACTION TOOLBAR -->
+        <div class="report-toolbar">
+            <h3>📑 Incident Actions & SIEM Integrations</h3>
+            <div class="report-buttons">
+                <a href="/recon?ip={{ result.source_ip }}" class="btn-report btn-secondary-report">
+                    🌐 Deep Recon Surface Scan
+                </a>
+                <a href="/report/{{ result.source_ip }}" class="btn-report btn-primary-report" target="_blank">
+                    📄 View Formal Audit Report
+                </a>
+                <a href="/export/report/{{ result.source_ip }}" class="btn-report btn-secondary-report">
+                    📥 Export Report (JSON)
+                </a>
+                <form method="POST" action="/api/webhook/dispatch" style="display:inline;">
+                    <input type="hidden" name="ip" value="{{ result.source_ip }}">
+                    <button type="submit" class="btn-report btn-secondary-report" title="Dispatch alert card to configured Webhook channel">
+                        📢 Dispatch Webhook Alert
+                    </button>
+                </form>
+                <button type="button" class="btn-report btn-secondary-report" onclick="window.print()">
+                    🖨️ Print / Save PDF
+                </button>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <footer>
+        SentinelX • Enterprise Cyber Security Operations Center, Threat Intelligence & SIEM Platform
+    </footer>
+</div>
+
+<!-- SCRIPTS: CHARTS & MAP -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. LEAFLET ATTACK WORLD MAP
+    const mapEl = document.getElementById('attackMap');
+    if (mapEl && typeof L !== 'undefined') {
+        const map = L.map('attackMap', { zoomControl: false }).setView([25.0, 10.0], 2);
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
+        // Dark Matter tiles for cyber SOC aesthetic
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 18
+        }).addTo(map);
+
+        const targetCoords = [39.0438, -77.4874]; // Primary Protected SOC Core Datacenter
+
+        // Add Target Protected Hub Marker
+        const socIcon = L.divIcon({
+            className: 'custom-soc-marker',
+            html: '<div class="pulse-marker" title="SentinelX Protected Core Datacenter"></div>',
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
+        });
+        L.marker(targetCoords, { icon: socIcon }).addTo(map).bindPopup(`
+            <div style="color: #040814; padding: 4px; font-family: sans-serif; font-size: 12px;">
+                <strong style="color: #0284c7;">🛡️ SentinelX Protected Primary SOC Datacenter</strong><br>
+                <span>Ashburn Core Perimeter • Automated Defense Active</span>
+            </div>
+        `);
+
+        const mapData = {{ geo_markers|tojson }};
+        mapData.forEach(item => {
+            const isHigh = item.level === 'HIGH';
+            const color = isHigh ? '#ef4444' : (item.level === 'MEDIUM' ? '#f59e0b' : '#10b981');
+            
+            // Pulsing Origin Marker
+            const originIcon = L.divIcon({
+                className: 'threat-origin-marker',
+                html: `<div class="pulse-marker ${isHigh ? 'pulse-danger' : ''}"></div>`,
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            });
+            const marker = L.marker([item.lat, item.lon], { icon: originIcon }).addTo(map);
+
+            marker.bindPopup(`
+                <div style="color: #080d1a; font-family: sans-serif; font-size: 12px; padding: 4px;">
+                    <strong>${item.flag} ${item.ip}</strong><br>
+                    <span>${item.city}, ${item.country}</span><br>
+                    <span>Severity: <strong style="color: ${color};">${item.level} (${item.risk}/100)</strong></span><br>
+                    <div style="margin-top: 5px;">
+                        <a href="/analyze?source_ip=${item.ip}" style="color: #0284c7; text-decoration: underline; font-weight: bold;">Analyze</a> •
+                        <a href="/recon?ip=${item.ip}" style="color: #0284c7; text-decoration: underline;">Recon Scan</a> •
+                        <a href="/report/${item.ip}" target="_blank" style="color: #0284c7; text-decoration: underline;">Audit Report</a>
+                    </div>
+                </div>
+            `);
+
+            // Draw curved laser flight arc to the Protected SOC Datacenter
+            const midLat = (item.lat + targetCoords[0]) / 2 + Math.abs(item.lon - targetCoords[1]) * 0.12;
+            const midLon = (item.lon + targetCoords[1]) / 2;
+            
+            const curvePoints = [];
+            for (let i = 0; i <= 25; i++) {
+                const t = i / 25;
+                const lat = (1 - t) * (1 - t) * item.lat + 2 * (1 - t) * t * midLat + t * t * targetCoords[0];
+                const lon = (1 - t) * (1 - t) * item.lon + 2 * (1 - t) * t * midLon + t * t * targetCoords[1];
+                curvePoints.push([lat, lon]);
+            }
+
+            L.polyline(curvePoints, {
+                color: color,
+                weight: isHigh ? 2.2 : 1.5,
+                opacity: isHigh ? 0.75 : 0.45,
+                dashArray: '5, 8',
+                lineCap: 'round'
+            }).addTo(map);
+        });
+
+        // Live Ticker rotator
+        const tickerMsgs = [
+            '⚡ Intercepted Brute-Force SSH attack vector from 🇷🇺 Moscow, Russia',
+            '🌊 Mitigated Layer 7 HTTP DDoS flood from 🇨🇳 Shenzhen, China',
+            '🕵️ Detected Off-Hours database exfiltration attempt via 🇳🇱 Amsterdam Tor Exit Relay',
+            '🛡️ Edge BGP Firewall auto-dropped 4,200 malicious syn packets'
+        ];
+        let tIdx = 0;
+        setInterval(() => {
+            const tickerEl = document.getElementById('liveTickerText');
+            if (tickerEl) {
+                tIdx = (tIdx + 1) % tickerMsgs.length;
+                tickerEl.textContent = tickerMsgs[tIdx];
+            }
+        }, 4000);
+    }
+
+    // 2. SEVERITY DOUGHNUT CHART
+    const sevCanvas = document.getElementById("severityChart");
+    if (sevCanvas && typeof Chart !== 'undefined') {
+        new Chart(sevCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['High Threats', 'Medium Risks', 'Clean / Normal'],
+                datasets: [{
+                    data: [{{ chart_stats.high|default(2) }}, {{ chart_stats.medium|default(3) }}, {{ chart_stats.low|default(5) }}],
+                    backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+                    borderColor: '#0f1a30',
+                    borderWidth: 3,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#94a3b8', boxWidth: 12, padding: 15 }
+                    }
+                },
+                cutout: '68%'
+            }
+        });
+    }
+
+    // 3. TRAFFIC LOAD TIMELINE CHART
+    const trafCanvas = document.getElementById("trafficChart");
+    if (trafCanvas && typeof Chart !== 'undefined') {
+        new Chart(trafCanvas, {
+            type: 'line',
+            data: {
+                labels: {{ chart_timeline.labels|tojson }},
+                datasets: [
+                    {
+                        label: 'Requests (req/min)',
+                        data: {{ chart_timeline.requests|tojson }},
+                        borderColor: '#38bdf8',
+                        backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Bandwidth (KB/s)',
+                        data: {{ chart_timeline.network|tojson }},
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#64748b', font: { size: 11 } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#64748b', font: { size: 11 } }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#94a3b8', boxWidth: 12, padding: 15 }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+
+</body>
+</html>

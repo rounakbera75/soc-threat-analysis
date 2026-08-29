@@ -1,0 +1,66 @@
+{
+  "model_name": "SentinelX Dual AI Threat Ensemble",
+  "trained_at": "2026-08-29",
+  "algorithm_1": "Isolation Forest (Unsupervised Anomaly Scoring)",
+  "algorithm_2": "Random Forest Classifier (Multi-Class Threat Categorization)",
+  "accuracy": 100.0,
+  "precision": 100.0,
+  "recall": 100.0,
+  "f1_score": 100.0,
+  "confusion_matrix": [
+    [
+      12,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      8,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      8,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      8,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      8
+    ]
+  ],
+  "classes": [
+    "Normal Activity",
+    "SSH/RDP Brute Force",
+    "Layer 7 DDoS Flood",
+    "Off-Hours Exfiltration",
+    "Port Recon Scan"
+  ],
+  "feature_names": [
+    "failed_attempts",
+    "request_count",
+    "unusual_hour",
+    "network_activity"
+  ],
+  "feature_importances": [
+    21.7,
+    36.8,
+    10.5,
+    31.0
+  ]
+}
