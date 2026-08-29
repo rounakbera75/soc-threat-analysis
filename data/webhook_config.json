@@ -2,8 +2,16 @@
   "webhook_url": "",
   "enabled": false,
   "min_severity": "HIGH",
-  "alerts_sent": 1,
+  "alerts_sent": 2,
   "history": [
+    {
+      "timestamp": "2026-08-29 07:11:56 UTC",
+      "ip": "192.168.13.1",
+      "level": "HIGH",
+      "risk": 95,
+      "delivery_status": "SIMULATED",
+      "delivery_note": "No external webhook URL configured; simulated in internal SOC alert queue."
+    },
     {
       "timestamp": "2026-08-29 06:18:55 UTC",
       "ip": "192.168.1.52",

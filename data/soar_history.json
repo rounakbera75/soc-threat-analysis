@@ -1,0 +1,48 @@
+[
+  {
+    "execution_id": "SOAR-EXEC-168131-1156",
+    "playbook_id": "PB-BRUTE-01",
+    "playbook_name": "Automated Brute Force & Credential Spray Containment",
+    "target_ip": "192.168.13.1",
+    "severity": "HIGH",
+    "status": "SUCCESSFULLY ORCHESTRATED",
+    "timestamp": "2026-08-29 07:11:56 UTC",
+    "steps": [
+      {
+        "num": 1,
+        "action": "Firewall ACL Ingress Block",
+        "command": "iptables -A INPUT -s 192.168.13.1 -j DROP",
+        "status": "COMPLETED (SUCCESS)",
+        "executed_at": "07:11:56.671"
+      },
+      {
+        "num": 2,
+        "action": "Revoke User Active OAuth Tokens & Sessions",
+        "command": "AUTH_SERVICE.revoke_tokens_by_ip('192.168.13.1')",
+        "status": "COMPLETED (SUCCESS)",
+        "executed_at": "07:11:56.671"
+      },
+      {
+        "num": 3,
+        "action": "Enforce Mandatory MFA / Step-Up Challenge",
+        "command": "MFA_POLICY.enforce_ip_quarantine('192.168.13.1')",
+        "status": "COMPLETED (SUCCESS)",
+        "executed_at": "07:11:56.671"
+      },
+      {
+        "num": 4,
+        "action": "Dispatch SIEM Alert Webhook to SOC Channel",
+        "command": "WEBHOOK_DISPATCHER.broadcast_alert('192.168.13.1')",
+        "status": "COMPLETED (SUCCESS)",
+        "executed_at": "07:11:56.671"
+      },
+      {
+        "num": 5,
+        "action": "Commit Incident Case into Forensics Registry",
+        "command": "INCIDENT_DB.commit_contained_case('192.168.13.1')",
+        "status": "COMPLETED (SUCCESS)",
+        "executed_at": "07:11:56.671"
+      }
+    ]
+  }
+]
