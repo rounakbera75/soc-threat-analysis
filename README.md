@@ -1,12 +1,31 @@
 # 🛡️ SentinelX: Autonomous AI Threat Intelligence & Next-Gen SIEM
 
+[![Live Demo](https://img.shields.io/badge/🚀_LIVE_DEMO-OPEN_IN_BROWSER-00ff66?style=for-the-badge&logo=google-chrome&logoColor=black)](https://peas-daniel-quotations-offers.trycloudflare.com)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/framework-Flask-black.svg)](https://flask.palletsprojects.com/)
 [![Scikit-Learn](https://img.shields.io/badge/ML-Scikit--Learn-orange.svg)](https://scikit-learn.org/)
 [![MITRE ATT&CK](https://img.shields.io/badge/Framework-MITRE%20ATT%26CK%20v14-red.svg)](https://attack.mitre.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**SentinelX** is an enterprise-grade, full-stack **Security Operations Center (SOC) & Threat Intelligence SIEM Platform**. It pairs a **Dual Machine Learning Ensemble (Isolation Forest + Random Forest)** with **OSINT Geolocation**, **Interactive 60 FPS Global Attack Flight Arcs**, **Automated SOAR Playbooks**, and **MITRE ATT&CK® v14 Matrix Mapping**.
+> ### 🌐 [👉 CLICK HERE TO OPEN LIVE PROJECT IN YOUR BROWSER 👈](https://peas-daniel-quotations-offers.trycloudflare.com)
+> **Direct Live Link (Phone, Laptop & Chrome Browser Ready)**:  
+> 🔗 **[https://peas-daniel-quotations-offers.trycloudflare.com](https://peas-daniel-quotations-offers.trycloudflare.com)**  
+> *(No setup or installation needed — click above to open the live working SOC platform immediately!)*
+
+---
+
+### 📱 Direct Live Features Directory
+
+| Feature Module | Direct Live URL | Description |
+| :--- | :--- | :--- |
+| 🌍 **Live Threat Map (60 FPS)** | [👉 Open Threat Map](https://peas-daniel-quotations-offers.trycloudflare.com/map) | Fullscreen animated attack flight arcs & live telemetry feed |
+| 🤖 **Dual AI Models & XAI** | [👉 Open AI Suite](https://peas-daniel-quotations-offers.trycloudflare.com/ai-models) | Isolation Forest + Random Forest benchmark & Explainable AI |
+| 🎯 **MITRE ATT&CK Matrix** | [👉 Open MITRE Matrix](https://peas-daniel-quotations-offers.trycloudflare.com/mitre) | Mapped techniques (`T1110`, `T1498`, `T1048`, `T1046`, `T1078`) |
+| ⚡ **SOAR Playbooks** | [👉 Open SOAR Runner](https://peas-daniel-quotations-offers.trycloudflare.com/playbooks) | 1-Click automated incident containment workflows |
+| 🌐 **Recon Surface Scanner** | [👉 Open Recon Scanner](https://peas-daniel-quotations-offers.trycloudflare.com/recon?ip=192.168.1.52) | Reverse DNS PTR, port vulnerability matrix & CVSS score |
+| 🛡️ **Active Firewall Console** | [👉 Open Firewall](https://peas-daniel-quotations-offers.trycloudflare.com/firewall) | 1-Click IP quarantine & `iptables` / `netsh` rule generator |
+| 💥 **Attack Simulator** | [👉 Open Simulator](https://peas-daniel-quotations-offers.trycloudflare.com/simulate) | 5 attack presets (SSH Brute Force, DDoS, Exfiltration) |
+| 📑 **Executive Reports** | [👉 Open Reports](https://peas-daniel-quotations-offers.trycloudflare.com/reports) | Threat intelligence graphs, case tracker, PDF export |
 
 ---
 
@@ -61,12 +80,12 @@ graph TD
 
 ---
 
-## 🚀 Quickstart Installation & Setup
+## 🚀 Quickstart Installation & Local Setup
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/SentinelX.git
-cd SentinelX
+git clone https://github.com/rounakbera75/soc-threat-analysis.git
+cd soc-threat-analysis
 ```
 
 ### 2. Set Up Virtual Environment
@@ -101,7 +120,7 @@ Open **[http://127.0.0.1:5000](http://127.0.0.1:5000)** in your browser!
 ## 📁 Project Structure
 
 ```
-SentinelX/
+soc-threat-analysis/
 ├── app.py                      # Flask Application Controller & REST Endpoints
 ├── train_models.py             # Dual AI Model Training Pipeline & Metrics Generator
 ├── requirements.txt            # Python Dependencies
