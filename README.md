@@ -1,16 +1,17 @@
 # 🛡️ SentinelX: Autonomous AI Threat Intelligence & Next-Gen SIEM
 
-[![Live Demo](https://img.shields.io/badge/🚀_LIVE_DEMO-OPEN_IN_BROWSER-00ff66?style=for-the-badge&logo=google-chrome&logoColor=black)](https://hint-occasionally-rpg-generation.trycloudflare.com)
+[![Live Demo](https://img.shields.io/badge/🚀_PERMANENT_LIVE_DEMO-OPEN_IN_BROWSER-00ff66?style=for-the-badge&logo=google-chrome&logoColor=black)](https://rounakbera75.github.io/soc-threat-analysis/)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/rounakbera75/soc-threat-analysis)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/framework-Flask-black.svg)](https://flask.palletsprojects.com/)
 [![Scikit-Learn](https://img.shields.io/badge/ML-Scikit--Learn-orange.svg)](https://scikit-learn.org/)
 [![MITRE ATT&CK](https://img.shields.io/badge/Framework-MITRE%20ATT%26CK%20v14-red.svg)](https://attack.mitre.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> ### 🌐 [👉 CLICK HERE TO OPEN LIVE PROJECT IN YOUR BROWSER 👈](https://hint-occasionally-rpg-generation.trycloudflare.com)
-> **Direct Live Link (Phone, Laptop & Chrome Browser Ready)**:  
-> 🔗 **[https://hint-occasionally-rpg-generation.trycloudflare.com](https://hint-occasionally-rpg-generation.trycloudflare.com)**  
-> *(No setup or installation needed — click above to open the live working SOC platform immediately!)*
+> ### 🌐 [👉 CLICK HERE TO OPEN 24/7 PERMANENT LIVE PROJECT IN YOUR BROWSER 👈](https://rounakbera75.github.io/soc-threat-analysis/)
+> **Direct Live Link (Phone, Laptop, Tablet & Browser Ready - 24/7 Always Online)**:  
+> 🔗 **[https://rounakbera75.github.io/soc-threat-analysis/](https://rounakbera75.github.io/soc-threat-analysis/)**  
+> *(Zero installation or setup needed — 100% accessible worldwide from any device at any time!)*
 
 ---
 
@@ -18,14 +19,18 @@
 
 | Feature Module | Direct Live URL | Description |
 | :--- | :--- | :--- |
-| 🌍 **Live Threat Map (60 FPS)** | [👉 Open Threat Map](https://hint-occasionally-rpg-generation.trycloudflare.com/map) | Fullscreen animated attack flight arcs & live telemetry feed |
-| 🤖 **Dual AI Models & XAI** | [👉 Open AI Suite](https://hint-occasionally-rpg-generation.trycloudflare.com/ai-models) | Isolation Forest + Random Forest benchmark & Explainable AI |
-| 🎯 **MITRE ATT&CK Matrix** | [👉 Open MITRE Matrix](https://hint-occasionally-rpg-generation.trycloudflare.com/mitre) | Mapped techniques (`T1110`, `T1498`, `T1048`, `T1046`, `T1078`) |
-| ⚡ **SOAR Playbooks** | [👉 Open SOAR Runner](https://hint-occasionally-rpg-generation.trycloudflare.com/playbooks) | 1-Click automated incident containment workflows |
-| 🌐 **Recon Surface Scanner** | [👉 Open Recon Scanner](https://hint-occasionally-rpg-generation.trycloudflare.com/recon?ip=192.168.1.52) | Reverse DNS PTR, port vulnerability matrix & CVSS score |
-| 🛡️ **Active Firewall Console** | [👉 Open Firewall](https://hint-occasionally-rpg-generation.trycloudflare.com/firewall) | 1-Click IP quarantine & `iptables` / `netsh` rule generator |
-| 💥 **Attack Simulator** | [👉 Open Simulator](https://hint-occasionally-rpg-generation.trycloudflare.com/simulate) | 5 attack presets (SSH Brute Force, DDoS, Exfiltration) |
-| 📑 **Executive Reports** | [👉 Open Reports](https://hint-occasionally-rpg-generation.trycloudflare.com/reports) | Threat intelligence graphs, case tracker, PDF export |
+| 📊 **SOC Dashboard** | [👉 Open Dashboard](https://rounakbera75.github.io/soc-threat-analysis/#dashboard) | Real-time SIEM overview, KPI metrics & telemetry charts |
+| 🌍 **Live Threat Map (60 FPS)** | [👉 Open Threat Map](https://rounakbera75.github.io/soc-threat-analysis/#threat-map) | Fullscreen animated attack flight arcs & live telemetry feed |
+| 🔍 **AI Threat Detector** | [👉 Open AI Detector](https://rounakbera75.github.io/soc-threat-analysis/#ai-detector) | Dual AI telemetry analyzer & instant heuristic risk calculator |
+| 🤖 **Dual AI Models & XAI** | [👉 Open AI Suite](https://rounakbera75.github.io/soc-threat-analysis/#ai-models) | Isolation Forest + Random Forest benchmark & Explainable AI |
+| 🎯 **MITRE ATT&CK Matrix** | [👉 Open MITRE Matrix](https://rounakbera75.github.io/soc-threat-analysis/#mitre) | Mapped techniques (`T1110`, `T1498`, `T1048`, `T1046`, `T1078`) |
+| ⚡ **SOAR Playbooks** | [👉 Open SOAR Runner](https://rounakbera75.github.io/soc-threat-analysis/#soar) | 1-Click automated incident containment workflows |
+| 🌐 **Recon Surface Scanner** | [👉 Open Recon Scanner](https://rounakbera75.github.io/soc-threat-analysis/#recon) | Reverse DNS PTR, port vulnerability matrix & CVSS score |
+| 💥 **Attack Simulator** | [👉 Open Simulator](https://rounakbera75.github.io/soc-threat-analysis/#simulate) | 5 attack presets (SSH Brute Force, DDoS, Exfiltration) |
+| 🛡️ **Active Firewall Console** | [👉 Open Firewall](https://rounakbera75.github.io/soc-threat-analysis/#firewall) | 1-Click IP quarantine & `iptables` / `netsh` rule generator |
+| 📋 **Security Logs** | [👉 Open Logs](https://rounakbera75.github.io/soc-threat-analysis/#logs) | Historical security event stream & CSV export |
+| 📑 **Executive Reports** | [👉 Open Reports](https://rounakbera75.github.io/soc-threat-analysis/#reports) | Threat intelligence graphs, case tracker, PDF export |
+| ⚙️ **SIEM Settings** | [👉 Open Settings](https://rounakbera75.github.io/soc-threat-analysis/#settings) | Discord/Slack Webhook alert dispatcher & sensitivity settings |
 
 ---
 
