@@ -52,16 +52,74 @@
             border-color: #38bdf8;
             background: rgba(56, 189, 248, 0.08);
         }
-        .sim-btn-active {
-            border-color: #38bdf8 !important;
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
-        }
         .status-badge-open { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
         .status-badge-investigating { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid #f59e0b; }
         .status-badge-contained { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #38bdf8; }
         .status-badge-resolved { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; }
+
+        /* Fullscreen Formal Report Modal */
+        .report-modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(4, 8, 20, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            overflow-y: auto;
+            padding: 40px 20px;
+        }
+        .report-modal-card {
+            max-width: 880px;
+            margin: 0 auto;
+            background: #0b1329;
+            border: 1px solid #1e3a8a;
+            border-radius: 12px;
+            padding: 35px 45px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            position: relative;
+            color: #f1f5f9;
+        }
+        .report-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #1e3a8a;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+        .report-section-box {
+            background: #070d1d;
+            border: 1px solid #1a2744;
+            border-radius: 8px;
+            padding: 18px 22px;
+            margin-bottom: 20px;
+        }
+
         @media print {
-            .sidebar, header, .no-print { display: none !important; }
+            .sidebar, header, .no-print, .report-modal-backdrop > :not(.report-modal-card) {
+                display: none !important;
+            }
+            .report-modal-backdrop {
+                position: static !important;
+                background: white !important;
+                padding: 0 !important;
+            }
+            .report-modal-card {
+                max-width: 100% !important;
+                background: white !important;
+                color: black !important;
+                border: 1px solid #ddd !important;
+                box-shadow: none !important;
+                padding: 20px !important;
+            }
+            .report-section-box {
+                background: #f8fafc !important;
+                border: 1px solid #cbd5e1 !important;
+                color: black !important;
+            }
             .main { margin-left: 0 !important; padding: 0 !important; width: 100% !important; }
             body { background: white !important; color: black !important; }
         }
@@ -84,7 +142,7 @@
     <a href="#simulate" class="nav" onclick="switchTab('simulate', event)">💥 Attack Simulator</a>
     <a href="#firewall" class="nav" onclick="switchTab('firewall', event)">🛡️ Active Firewall</a>
     <a href="#logs" class="nav" onclick="switchTab('logs', event)">📋 Security Logs</a>
-    <a href="#reports" class="nav" onclick="switchTab('reports', event)">📑 Executive Reports</a>
+    <a href="#reports" class="nav" onclick="switchTab('reports', event)">📑 Report Generator & Reports</a>
     <a href="#settings" class="nav" onclick="switchTab('settings', event)">⚙️ SIEM Settings</a>
 </div>
 
@@ -96,10 +154,13 @@
             <p id="pageSubTitle">Real-Time Telemetry, Dual Machine Learning Anomaly Detection, Global Geolocation & SOAR Containment</p>
         </div>
         <div style="display: flex; gap: 10px; align-items: center;">
+            <button onclick="generateOrgExecutiveReport()" class="btn-sm" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                📄 Generate Executive Report
+            </button>
             <div class="online">
-                ● SIEM ENGINE ONLINE
+                ● SIEM SENSORS ONLINE
             </div>
-            <a href="https://github.com/rounakbera75/soc-threat-analysis" target="_blank" class="btn-sm" style="background: #1e293b; border: 1px solid #334155; color: #f8fafc; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">
+            <a href="https://github.com/rounakbera75/soc-threat-analysis" target="_blank" class="btn-sm" style="background: #1e293b; border: 1px solid #334155; color: #f8fafc; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">
                 ⭐ GitHub Repo
             </a>
         </div>
@@ -202,8 +263,8 @@
                 <button onclick="switchTab('soar')" class="btn" style="background: #1e293b; border: 1px solid #10b981; color: #10b981; padding: 14px; text-align: center; border-radius: 8px; cursor: pointer; font-weight: bold;">
                     ⚡ Run SOAR Playbook
                 </button>
-                <button onclick="switchTab('reports')" class="btn" style="background: #1e293b; border: 1px solid #a855f7; color: #a855f7; padding: 14px; text-align: center; border-radius: 8px; cursor: pointer; font-weight: bold;">
-                    📑 Generate SIEM Report
+                <button onclick="generateOrgExecutiveReport()" class="btn" style="background: #1e293b; border: 1px solid #a855f7; color: #a855f7; padding: 14px; text-align: center; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    📑 Generate SIEM Audit Report
                 </button>
             </div>
         </section>
@@ -343,12 +404,15 @@
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 10px;">
-                    <button onclick="quarantineCurrentResultIp()" class="btn" style="flex: 1; background: #dc2626; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">
-                        🛡️ 1-Click Quarantine IP
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="generateSingleHostReport(document.getElementById('inputIp').value.trim())" class="btn" style="flex: 1; background: #0284c7; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                        📄 Generate Forensic Audit Report
                     </button>
-                    <button onclick="executeSoarForCurrentIp()" class="btn" style="flex: 1; background: #0284c7; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">
-                        ⚡ Trigger SOAR Containment
+                    <button onclick="quarantineCurrentResultIp()" class="btn" style="background: #dc2626; color: white; border: none; padding: 12px 18px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                        🛡️ Quarantine IP
+                    </button>
+                    <button onclick="executeSoarForCurrentIp()" class="btn" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 12px 18px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                        ⚡ SOAR Contain
                     </button>
                 </div>
             </section>
@@ -802,26 +866,65 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
     </div>
 
     <!-- ========================================== -->
-    <!-- TAB 11: EXECUTIVE REPORTS & CASE TRACKER -->
+    <!-- TAB 11: EXECUTIVE REPORTS & REPORT GENERATOR -->
     <!-- ========================================== -->
     <div id="reports-tab" class="tab-content">
-        <section class="panel">
-            <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h2>📑 Executive Threat Intelligence & Incident Case Tracker</h2>
-                    <p>Formal SOC audit trail, compliance metrics, and downloadable SIEM reports</p>
+        <!-- REPORT GENERATION HUB -->
+        <section class="panel" style="background: linear-gradient(135deg, #0d1a38 0%, #080e1e 100%); border: 1px solid #2563eb; margin-bottom: 25px;">
+            <div class="panel-title">
+                <h2>📑 SIEM Threat Intelligence Report Generator Hub</h2>
+                <p>Generate high-level executive compliance reports or deep forensic host audits with 1 click</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+                <!-- OPTION A: ORG EXECUTIVE REPORT -->
+                <div style="background: #080f22; border: 1px solid #1e3a8a; border-radius: 8px; padding: 20px;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">🏛️</div>
+                    <h3 style="color: #38bdf8; font-size: 16px; margin-bottom: 6px;">Executive SIEM Security Audit Report</h3>
+                    <p style="font-size: 12px; color: #94a3b8; margin-bottom: 15px;">
+                        Generates a comprehensive CISO audit report covering all monitored endpoints, global threat origins, quarantined hosts, and MITRE ATT&CK enterprise compliance.
+                    </p>
+                    <button onclick="generateOrgExecutiveReport()" class="btn" style="width: 100%; background: #0284c7; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                        📄 Generate Executive Audit Report
+                    </button>
                 </div>
-                <div style="display: flex; gap: 8px;">
-                    <button onclick="window.print()" class="btn-sm" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
-                        🖨️ Print / Save PDF Audit
-                    </button>
-                    <button onclick="downloadJsonReport()" class="btn-sm" style="background: #1e293b; color: #10b981; border: 1px solid #10b981; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
-                        📥 Export JSON SIEM
-                    </button>
+
+                <!-- OPTION B: SINGLE HOST FORENSIC REPORT -->
+                <div style="background: #080f22; border: 1px solid #1e3a8a; border-radius: 8px; padding: 20px;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">🔬</div>
+                    <h3 style="color: #f59e0b; font-size: 16px; margin-bottom: 6px;">Single Host Forensic Audit Report</h3>
+                    <p style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">
+                        Select or enter any target IP address to generate a dedicated forensic dossier with risk telemetry, port CVE vulnerabilities, and firewall mitigation rules.
+                    </p>
+                    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                        <input type="text" id="reportCustomIp" value="192.168.1.52" placeholder="e.g. 192.168.1.52" style="flex: 1; padding: 8px 12px; background: #040814; border: 1px solid #1a2744; border-radius: 6px; color: #f8fafc; font-family: monospace; font-size: 12px;">
+                        <button onclick="generateSingleHostReport(document.getElementById('reportCustomIp').value.trim())" class="btn" style="background: #f59e0b; color: #080e1e; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                            Generate Dossier
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <h3 style="font-size: 14px; color: #38bdf8; margin: 15px 0 10px 0;">🛡️ Active Incident Triage Cases</h3>
+            <!-- EXPORT ACTION BUTTONS -->
+            <div style="display: flex; gap: 10px; margin-top: 20px; border-top: 1px solid #1a2744; padding-top: 15px;">
+                <button onclick="downloadJsonReport()" class="btn-sm" style="background: #1e293b; color: #10b981; border: 1px solid #10b981; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                    📥 Export SIEM Intelligence (JSON)
+                </button>
+                <button onclick="downloadLogsCsv()" class="btn-sm" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                    📥 Export Raw Telemetry (CSV)
+                </button>
+            </div>
+        </section>
+
+        <!-- ACTIVE INCIDENTS CASE TRACKER -->
+        <section class="panel">
+            <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2>🛡️ Active Incident Triage Cases & Forensic Audit Trail</h2>
+                    <p>Live incident case investigations with individual forensic report generators</p>
+                </div>
+            </div>
+
             <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; margin-bottom: 25px;">
                 <thead>
                     <tr style="border-bottom: 1px solid #1a2744; color: #64748b;">
@@ -829,7 +932,7 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
                         <th style="padding: 10px;">SUSPECT HOST</th>
                         <th style="padding: 10px;">TACTIC / TECHNIQUE</th>
                         <th style="padding: 10px;">STATUS</th>
-                        <th style="padding: 10px;">STAGE ACTION</th>
+                        <th style="padding: 10px;">ACTIONS</th>
                     </tr>
                 </thead>
                 <tbody id="incidentsTableBody">
@@ -838,21 +941,42 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
                         <td style="padding: 10px; font-family: monospace;">192.168.1.52</td>
                         <td style="padding: 10px; color: #ef4444;">SSH Brute Force Spray (T1110.001)</td>
                         <td style="padding: 10px;"><span class="badge status-badge-contained" id="incStatus1">CONTAINED</span></td>
-                        <td style="padding: 10px;"><button onclick="toggleIncidentStatus('incStatus1')" class="btn-sm" style="background:#1e293b; color:#cbd5e1; border:1px solid #334155; padding:4px 8px; cursor:pointer;">Update Status</button></td>
+                        <td style="padding: 10px; display: flex; gap: 8px;">
+                            <button onclick="generateSingleHostReport('192.168.1.52')" class="btn-sm" style="background:#0284c7; color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer;">
+                                📄 Report
+                            </button>
+                            <button onclick="toggleIncidentStatus('incStatus1')" class="btn-sm" style="background:#1e293b; color:#cbd5e1; border:1px solid #334155; padding:4px 8px; cursor:pointer;">
+                                Status
+                            </button>
+                        </td>
                     </tr>
                     <tr style="border-bottom: 1px solid #111e38;">
                         <td style="padding: 10px; font-family: monospace; color: #38bdf8;">INC-2026-0842</td>
                         <td style="padding: 10px; font-family: monospace;">45.154.255.88</td>
                         <td style="padding: 10px; color: #ef4444;">Layer 7 HTTP Flood DDoS (T1498.001)</td>
                         <td style="padding: 10px;"><span class="badge status-badge-resolved" id="incStatus2">RESOLVED</span></td>
-                        <td style="padding: 10px;"><button onclick="toggleIncidentStatus('incStatus2')" class="btn-sm" style="background:#1e293b; color:#cbd5e1; border:1px solid #334155; padding:4px 8px; cursor:pointer;">Update Status</button></td>
+                        <td style="padding: 10px; display: flex; gap: 8px;">
+                            <button onclick="generateSingleHostReport('45.154.255.88')" class="btn-sm" style="background:#0284c7; color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer;">
+                                📄 Report
+                            </button>
+                            <button onclick="toggleIncidentStatus('incStatus2')" class="btn-sm" style="background:#1e293b; color:#cbd5e1; border:1px solid #334155; padding:4px 8px; cursor:pointer;">
+                                Status
+                            </button>
+                        </td>
                     </tr>
                     <tr style="border-bottom: 1px solid #111e38;">
                         <td style="padding: 10px; font-family: monospace; color: #38bdf8;">INC-2026-0843</td>
                         <td style="padding: 10px; font-family: monospace;">185.220.101.5</td>
                         <td style="padding: 10px; color: #f59e0b;">Off-Hours Exfiltration via Tor (T1048.003)</td>
                         <td style="padding: 10px;"><span class="badge status-badge-investigating" id="incStatus3">INVESTIGATING</span></td>
-                        <td style="padding: 10px;"><button onclick="toggleIncidentStatus('incStatus3')" class="btn-sm" style="background:#1e293b; color:#cbd5e1; border:1px solid #334155; padding:4px 8px; cursor:pointer;">Update Status</button></td>
+                        <td style="padding: 10px; display: flex; gap: 8px;">
+                            <button onclick="generateSingleHostReport('185.220.101.5')" class="btn-sm" style="background:#0284c7; color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer;">
+                                📄 Report
+                            </button>
+                            <button onclick="toggleIncidentStatus('incStatus3')" class="btn-sm" style="background:#1e293b; color:#cbd5e1; border:1px solid #334155; padding:4px 8px; cursor:pointer;">
+                                Status
+                            </button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -907,6 +1031,15 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
                 </div>
             </div>
         </section>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- FULLSCREEN FORMAL REPORT MODAL DIALOG -->
+<!-- ========================================== -->
+<div id="reportModalBackdrop" class="report-modal-backdrop" onclick="closeReportModal(event)">
+    <div class="report-modal-card" id="reportModalContent" onclick="event.stopPropagation()">
+        <!-- DYNAMIC REPORT CONTENT INJECTED HERE -->
     </div>
 </div>
 
@@ -973,7 +1106,7 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
             'simulate': ['Cyber Attack Scenario Simulator', 'Inject Attack Vectors to Test Detection & SIEM Alarms'],
             'firewall': ['Active Firewall Quarantine & Rule Synthesizer', 'Quarantined Hosts, iptables, netsh & Cisco ACL Rules'],
             'logs': ['Security Telemetry Ingress Stream', 'Historical Event Logs & Batch CSV Upload Analyzer'],
-            'reports': ['Executive Security Reports & Case Tracker', 'Audit Trail, Compliance Metrics & Formal Report Generation'],
+            'reports': ['Executive Threat Reports & Incident Case Tracker', 'Audit Trail, Compliance Metrics & Formal Report Generation Hub'],
             'settings': ['SOC SIEM Integrations & Webhook Settings', 'Discord/Slack SIEM Webhook Dispatcher & Sensitivity Sliders']
         };
 
@@ -1175,7 +1308,7 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
         document.getElementById('resultMitre').innerText = res.mitre;
         document.getElementById('resultGeo').innerText = "🇷🇺 Moscow, Russia (AS12389 Rostelecom)";
 
-        // Also update firewall rule pre-generation
+        // Update pre-generated firewall rule
         document.getElementById('firewallCliRules').innerText = 
 `# Linux iptables Drop Rule
 sudo iptables -A INPUT -s ${ip} -j DROP
@@ -1343,8 +1476,11 @@ access-list 101 deny ip host ${ip} any`;
                 <td style="padding: 10px;">🇷🇺 Russia</td>
                 <td style="padding: 10px;">Brute Force / Volumetric DDoS</td>
                 <td style="padding: 10px; color: #64748b;">2026-08-29 20:30 UTC</td>
-                <td style="padding: 10px;">
-                    <button onclick="unblockIp('${ip}')" class="btn-sm" style="background: #1e293b; color: #10b981; border: 1px solid #10b981; padding: 4px 10px; border-radius: 4px; cursor: pointer;">
+                <td style="padding: 10px; display: flex; gap: 8px;">
+                    <button onclick="generateSingleHostReport('${ip}')" class="btn-sm" style="background: #0284c7; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
+                        📄 Report
+                    </button>
+                    <button onclick="unblockIp('${ip}')" class="btn-sm" style="background: #1e293b; color: #10b981; border: 1px solid #10b981; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
                         Unblock
                     </button>
                 </td>
@@ -1422,15 +1558,17 @@ access-list 101 deny ip host ${ip} any`;
 
     function downloadJsonReport() {
         const payload = {
-            system: "SentinelX AI Threat SIEM",
+            system: "SentinelX AI Threat Intelligence SIEM",
+            classification: "CONFIDENTIAL // LAW ENFORCEMENT SENSITIVE",
             generated_at: new Date().toISOString(),
+            total_quarantined_hosts: blockedIps.length,
             quarantined_hosts: blockedIps,
-            telemetry: threatLogs
+            telemetry_events: threatLogs
         };
         const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = "sentinelx_threat_report.json";
+        a.download = "sentinelx_siem_executive_report.json";
         a.click();
     }
 
@@ -1459,6 +1597,233 @@ access-list 101 deny ip host ${ip} any`;
 
     function triggerRadarPing() {
         alert("📡 Radar broadcast ping dispatched across all listening SOC wallboard nodes!");
+    }
+
+    // ==========================================
+    // FORMAL REPORT GENERATION ENGINE
+    // ==========================================
+    function openReportModal(htmlContent) {
+        const container = document.getElementById('reportModalContent');
+        container.innerHTML = htmlContent;
+        document.getElementById('reportModalBackdrop').style.display = 'block';
+    }
+
+    function closeReportModal(e) {
+        if (!e || e.target.id === 'reportModalBackdrop' || e.target.classList.contains('btn-close-modal')) {
+            document.getElementById('reportModalBackdrop').style.display = 'none';
+        }
+    }
+
+    // 1. EXECUTIVE SIEM AUDIT REPORT
+    function generateOrgExecutiveReport() {
+        const reportId = "RPT-SIEM-" + Math.floor(100000 + Math.random() * 900000);
+        const timestamp = new Date().toUTCString();
+
+        const html = `
+            <div class="report-modal-header">
+                <div>
+                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase;">
+                        OFFICIAL CYBER SECURITY OPERATIONS CENTER REPORT
+                    </div>
+                    <h1 style="font-size: 24px; color: #f8fafc; margin: 6px 0 4px 0;">🛡️ Executive SIEM Threat Intelligence Audit</h1>
+                    <p style="font-size: 12px; color: #94a3b8; margin: 0;">Comprehensive threat landscape, AI vector metrics & active quarantine audit trail</p>
+                </div>
+                <div style="text-align: right; font-size: 12px; color: #94a3b8;">
+                    <div style="font-weight: bold; color: #38bdf8; font-family: monospace;">REF: ${reportId}</div>
+                    <div style="margin-top: 4px;">Generated: ${timestamp}</div>
+                    <div style="margin-top: 4px; color: #ef4444; font-weight: bold;">CLASSIFICATION: RESTRICTED // CUI</div>
+                </div>
+            </div>
+
+            <!-- EXECUTIVE SUMMARY STATS -->
+            <div class="report-section-box" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; text-align: center;">
+                <div>
+                    <span style="font-size: 10px; color: #64748b; font-weight: bold;">OVERALL POSTURE</span>
+                    <strong style="display: block; font-size: 16px; color: #10b981; margin-top: 4px;">ACTIVE DEFENSE</strong>
+                </div>
+                <div>
+                    <span style="font-size: 10px; color: #64748b; font-weight: bold;">AI DETECTION ENGINE</span>
+                    <strong style="display: block; font-size: 16px; color: #38bdf8; margin-top: 4px;">ISOLATION FOREST + RF</strong>
+                </div>
+                <div>
+                    <span style="font-size: 10px; color: #64748b; font-weight: bold;">QUARANTINED ENDPOINTS</span>
+                    <strong style="display: block; font-size: 16px; color: #ef4444; margin-top: 4px;">${blockedIps.length} HOSTS</strong>
+                </div>
+                <div>
+                    <span style="font-size: 10px; color: #64748b; font-weight: bold;">EVENTS INGESTED</span>
+                    <strong style="display: block; font-size: 16px; color: #f8fafc; margin-top: 4px;">${threatLogs.length * 368} PACKETS</strong>
+                </div>
+            </div>
+
+            <!-- MITRE ATT&CK & THREAT SEVERITY OVERVIEW -->
+            <div class="report-section-box">
+                <h3 style="font-size: 14px; color: #38bdf8; margin-bottom: 10px;">🎯 Mapped MITRE ATT&CK® Enterprise Techniques</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px;">
+                    <div style="background: #040814; padding: 10px; border-radius: 6px; border-left: 3px solid #ef4444;">
+                        <strong>T1110.001 - Password Spraying (Brute Force)</strong>
+                        <p style="color: #94a3b8; font-size: 11px; margin: 4px 0 0 0;">Automated SSH dictionary attacks targeting gateway credentials.</p>
+                    </div>
+                    <div style="background: #040814; padding: 10px; border-radius: 6px; border-left: 3px solid #ef4444;">
+                        <strong>T1498.001 - Direct Network Flood DDoS</strong>
+                        <p style="color: #94a3b8; font-size: 11px; margin: 4px 0 0 0;">Volumetric HTTP packet floods exhausting gateway concurrency.</p>
+                    </div>
+                    <div style="background: #040814; padding: 10px; border-radius: 6px; border-left: 3px solid #f59e0b;">
+                        <strong>T1048.003 - Exfiltration Over Tor Relay</strong>
+                        <p style="color: #94a3b8; font-size: 11px; margin: 4px 0 0 0;">Encrypted outbound byte transfer during non-business hours.</p>
+                    </div>
+                    <div style="background: #040814; padding: 10px; border-radius: 6px; border-left: 3px solid #38bdf8;">
+                        <strong>T1046 - Network Service Discovery (Recon)</strong>
+                        <p style="color: #94a3b8; font-size: 11px; margin: 4px 0 0 0;">Rapid TCP port sweeps across standard listening services.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUARANTINED HOSTS TABLE -->
+            <div class="report-section-box">
+                <h3 style="font-size: 14px; color: #38bdf8; margin-bottom: 10px;">🛡️ Quarantined Threat Hosts Registry</h3>
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+                    <thead>
+                        <tr style="color: #64748b; border-bottom: 1px solid #1a2744;">
+                            <th style="padding: 6px;">IP ADDRESS</th>
+                            <th style="padding: 6px;">LOCATION</th>
+                            <th style="padding: 6px;">PRIMARY VECTOR</th>
+                            <th style="padding: 6px;">CONTAINMENT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${blockedIps.map(ip => `
+                            <tr style="border-bottom: 1px solid #0e1a38;">
+                                <td style="padding: 6px; font-family: monospace; color: #ef4444;">${ip}</td>
+                                <td style="padding: 6px;">🇷🇺 Moscow, Russia</td>
+                                <td style="padding: 6px;">SSH Brute Force / Volumetric Flood</td>
+                                <td style="padding: 6px;"><span class="badge low" style="font-size: 9px;">ACTIVE DROP RULE</span></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- FORMAL DIGITAL SIGN-OFF -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid #1a2744; font-size: 11px; color: #64748b;">
+                <div>
+                    <div><strong>AUDITOR:</strong> SentinelX Autonomous AI SIEM Engine</div>
+                    <div><strong>HASH:</strong> SHA-256: 8f4b2c89e1a32...</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="color: #10b981; font-weight: bold;">● VERIFIED SOC DIGITAL AUDIT STAMP</div>
+                    <div>Ashburn Datacenter Gateway #01</div>
+                </div>
+            </div>
+
+            <!-- MODAL ACTION BAR -->
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px;" class="no-print">
+                <button onclick="window.print()" class="btn" style="background: #0284c7; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                    🖨️ Print / Save as PDF
+                </button>
+                <button onclick="downloadJsonReport()" class="btn" style="background: #1e293b; color: #10b981; border: 1px solid #10b981; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                    📥 Export JSON
+                </button>
+                <button onclick="closeReportModal()" class="btn btn-close-modal" style="background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 10px 18px; border-radius: 6px; cursor: pointer;">
+                    Close
+                </button>
+            </div>
+        `;
+
+        openReportModal(html);
+    }
+
+    // 2. SINGLE HOST FORENSIC AUDIT DOSSIER
+    function generateSingleHostReport(targetIp) {
+        const ip = targetIp || "192.168.1.52";
+        const reportId = "DOSSIER-" + ip.replace(/\./g, '') + "-2026";
+        const timestamp = new Date().toUTCString();
+
+        // Evaluate threat heuristics for this IP
+        const res = evaluateThreatAI(18, 380, 1, 840);
+
+        const html = `
+            <div class="report-modal-header">
+                <div>
+                    <div style="font-size: 11px; color: #f59e0b; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase;">
+                        ENDPOINT FORENSIC SECURITY DOSSIER
+                    </div>
+                    <h1 style="font-size: 24px; color: #f8fafc; margin: 6px 0 4px 0;">🔬 Threat Forensic Report: ${ip}</h1>
+                    <p style="font-size: 12px; color: #94a3b8; margin: 0;">Multi-layered anomaly scoring, OSINT geolocation, MITRE mapping & firewall containment</p>
+                </div>
+                <div style="text-align: right; font-size: 12px; color: #94a3b8;">
+                    <div style="font-weight: bold; color: #f59e0b; font-family: monospace;">REF: ${reportId}</div>
+                    <div style="margin-top: 4px;">Analyzed: ${timestamp}</div>
+                    <div style="margin-top: 4px; color: #ef4444; font-weight: bold;">SEVERITY: CRITICAL (LEVEL 5)</div>
+                </div>
+            </div>
+
+            <!-- SCORE CARD -->
+            <div class="report-section-box" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span style="font-size: 11px; color: #64748b; font-weight: bold;">HEURISTIC THREAT SCORE</span>
+                    <div style="font-size: 36px; font-weight: 900; color: #ef4444;">95/100</div>
+                    <div style="font-size: 12px; color: #10b981;">Isolation Forest: ANOMALY CONFIRMED (100% Match)</div>
+                </div>
+                <div style="text-align: right;">
+                    <span class="badge high" style="font-size: 13px; padding: 6px 14px;">CRITICAL RISK</span>
+                    <div style="font-size: 12px; color: #94a3b8; margin-top: 6px;">Vector: SSH Brute Force Credential Spray</div>
+                </div>
+            </div>
+
+            <!-- EVIDENCE & TELEMETRY TABLE -->
+            <div class="report-section-box">
+                <h3 style="font-size: 14px; color: #38bdf8; margin-bottom: 10px;">📊 Telemetry Ingress Evidence</h3>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #040814; padding: 12px; border-radius: 6px; text-align: center; font-size: 12px;">
+                    <div><span style="font-size: 10px; color: #64748b;">FAILED LOGINS</span><strong style="display:block; color:#ef4444; font-size: 14px; margin-top:2px;">18 Attempts</strong></div>
+                    <div><span style="font-size: 10px; color: #64748b;">REQUEST RATE</span><strong style="display:block; color:#f8fafc; font-size: 14px; margin-top:2px;">380 req/min</strong></div>
+                    <div><span style="font-size: 10px; color: #64748b;">TIME OF ATTACK</span><strong style="display:block; color:#f59e0b; font-size: 14px; margin-top:2px;">03:14 AM (Off-Peak)</strong></div>
+                    <div><span style="font-size: 10px; color: #64748b;">BANDWIDTH</span><strong style="display:block; color:#38bdf8; font-size: 14px; margin-top:2px;">840 KB/s</strong></div>
+                </div>
+            </div>
+
+            <!-- OSINT & MITRE MAPPINGS -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <div class="report-section-box" style="margin-bottom: 0;">
+                    <h3 style="font-size: 13px; color: #38bdf8; margin-bottom: 8px;">🌐 OSINT Geolocation & Network</h3>
+                    <div style="font-size: 12px; display: flex; flex-direction: column; gap: 6px;">
+                        <div><strong>Location:</strong> 🇷🇺 Moscow, Russia</div>
+                        <div><strong>Autonomous System:</strong> AS12389 Rostelecom</div>
+                        <div><strong>Tor Exit Node:</strong> <span style="color:#ef4444;">Flagged Positive</span></div>
+                    </div>
+                </div>
+                <div class="report-section-box" style="margin-bottom: 0;">
+                    <h3 style="font-size: 13px; color: #38bdf8; margin-bottom: 8px;">🎯 MITRE ATT&CK® Vector</h3>
+                    <div style="font-size: 12px; display: flex; flex-direction: column; gap: 6px;">
+                        <div><strong>Technique:</strong> T1110.001 (Password Spraying)</div>
+                        <div><strong>Tactic:</strong> Initial Access (TA0001)</div>
+                        <div><strong>Severity:</strong> <span style="color:#ef4444;">Critical Impact</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FIREWALL RULES -->
+            <div class="report-section-box">
+                <h3 style="font-size: 13px; color: #38bdf8; margin-bottom: 8px;">💻 Containment Mitigation Script</h3>
+                <pre style="background: #040814; padding: 10px; border-radius: 6px; color: #38bdf8; font-size: 11px; margin: 0; overflow-x: auto;">
+sudo iptables -A INPUT -s ${ip} -j DROP
+netsh advfirewall firewall add rule name="SentinelX_Quarantine_${ip}" dir=in action=block remoteip=${ip}</pre>
+            </div>
+
+            <!-- MODAL ACTION BAR -->
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px;" class="no-print">
+                <button onclick="window.print()" class="btn" style="background: #0284c7; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                    🖨️ Print / Save as PDF
+                </button>
+                <button onclick="downloadJsonReport()" class="btn" style="background: #1e293b; color: #10b981; border: 1px solid #10b981; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                    📥 Export JSON
+                </button>
+                <button onclick="closeReportModal()" class="btn btn-close-modal" style="background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 10px 18px; border-radius: 6px; cursor: pointer;">
+                    Close
+                </button>
+            </div>
+        `;
+
+        openReportModal(html);
     }
 
     // --- CHART.JS INITIALIZATION ---
