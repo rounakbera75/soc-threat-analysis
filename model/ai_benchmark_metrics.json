@@ -1,6 +1,6 @@
 {
   "model_name": "SentinelX Dual AI Threat Ensemble",
-  "trained_at": "2026-10-15 13:02:58",
+  "trained_at": "2026-10-15 15:02:51",
   "algorithm_1": "Isolation Forest (Unsupervised Anomaly Scoring)",
   "algorithm_2": "Random Forest Classifier (Multi-Class Threat Categorization)",
   "accuracy": 100.0,
