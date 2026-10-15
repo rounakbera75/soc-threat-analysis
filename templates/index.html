@@ -23,10 +23,16 @@
     <a href="/#analyze-section" class="nav">🔍 Threat Detection</a>
     <a href="/recon" class="nav">🌐 Recon Scanner</a>
     <a href="/simulate" class="nav">⚡ Attack Simulator</a>
-    <a href="/firewall" class="nav">🛡️ Firewall & Blocklist</a>
+    <a href="/firewall" class="nav">🛡️ Firewall &amp; Blocklist</a>
     <a href="/logs" class="nav">📋 Security Logs</a>
     <a href="/reports" class="nav">📑 Security Reports</a>
+    <a href="/ai-models" class="nav">🤖 AI Models</a>
+    <a href="/mitre" class="nav">🎯 MITRE ATT&amp;CK</a>
+    <a href="/playbooks" class="nav">📘 SOAR Playbooks</a>
     <a href="/settings" class="nav">⚙️ SOC Settings</a>
+    <div style="margin-top:auto; padding-top:15px; border-top:1px solid #1a2744;">
+        <a href="/settings#remote-soc" class="nav" style="color:#38bdf8;">🌐 Remote SOC Access</a>
+    </div>
 </div>
 
 <div class="main">
@@ -135,14 +141,19 @@
 
         <form method="POST" action="/analyze">
             <div class="input-box">
-                <label>Source IP Address</label>
+                <label>Source IP Address <span style="font-size:11px; color:#64748b; font-weight:400;">(Enter a public IP for real geolocation)</span></label>
                 <input
                     type="text"
                     name="source_ip"
-                    placeholder="e.g. 192.168.1.52, 192.168.1.50, or 192.168.1.10"
+                    id="sourceIpInput"
+                    placeholder="e.g. 185.220.101.47, 103.251.167.10, or 8.8.8.8"
                     value="{{ result.source_ip if result else '' }}"
                     required
+                    oninput="checkPrivateIp(this.value)"
                 >
+                <div id="privateIpWarning" style="display:none; margin-top:7px; padding:8px 12px; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.35); border-radius:6px; font-size:12px; color:#f59e0b;">
+                    ⚠️ <strong>Private/Local IP detected.</strong> Private IPs (192.168.x, 10.x, 172.16-31.x) cannot be geolocated — the map will show a synthetic demo location. For real threat intelligence, enter a <strong>public IP</strong>.
+                </div>
             </div>
 
             <button type="submit" id="analyze-btn">
@@ -470,6 +481,16 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 });
+
+function checkPrivateIp(val) {
+    const warn = document.getElementById('privateIpWarning');
+    if (!warn) return;
+    const v = val.trim();
+    const isPrivate = v.startsWith('192.168.') || v.startsWith('10.') ||
+        v.startsWith('127.') || v === 'localhost' ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(v);
+    warn.style.display = isPrivate ? 'block' : 'none';
+}
 </script>
 
 </body>

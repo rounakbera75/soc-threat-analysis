@@ -1,6 +1,6 @@
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from utils.firewall import block_ip, update_incident_status
 from utils.notifications import dispatch_webhook_alert
 
@@ -121,17 +121,17 @@ def execute_playbook(playbook_id, target_ip):
             "action": s["action"],
             "command": s["command"].replace("{ip}", clean_ip),
             "status": "COMPLETED (SUCCESS)",
-            "executed_at": datetime.utcnow().strftime("%H:%M:%S.%f")[:-3]
+            "executed_at": datetime.now(timezone.utc).strftime("%H:%M:%S.%f")[:-3]
         })
 
     record = {
-        "execution_id": f"SOAR-EXEC-{clean_ip.replace('.', '')[-6:]}-{datetime.utcnow().strftime('%M%S')}",
+        "execution_id": f"SOAR-EXEC-{clean_ip.replace('.', '')[-6:]}-{datetime.now(timezone.utc).strftime('%M%S')}",
         "playbook_id": selected_pb["id"],
         "playbook_name": selected_pb["name"],
         "target_ip": clean_ip,
         "severity": selected_pb["severity"],
         "status": "SUCCESSFULLY ORCHESTRATED",
-        "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         "steps": executed_steps
     }
 

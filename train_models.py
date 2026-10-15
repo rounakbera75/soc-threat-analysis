@@ -5,6 +5,7 @@ import numpy as np
 from sklearn.ensemble import IsolationForest, RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 import joblib
+from datetime import datetime
 
 # Create larger synthetic training dataset for multi-class cyber threat classification
 data_rows = [
@@ -56,7 +57,7 @@ feat_imp = rf_classifier.feature_importances_.tolist()
 
 metrics_payload = {
     "model_name": "SentinelX Dual AI Threat Ensemble",
-    "trained_at": "2026-08-29",
+    "trained_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     "algorithm_1": "Isolation Forest (Unsupervised Anomaly Scoring)",
     "algorithm_2": "Random Forest Classifier (Multi-Class Threat Categorization)",
     "accuracy": round(acc * 100, 1),

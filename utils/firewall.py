@@ -1,6 +1,6 @@
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 BLOCKED_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "blocked_ips.json")
 INCIDENTS_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "incidents.json")
@@ -55,7 +55,7 @@ def block_ip(ip, reason="Automated AI Threat Detection", threat_level="HIGH", ri
             item["reason"] = reason
             item["threat_level"] = threat_level
             item["risk_score"] = risk_score
-            item["updated_at"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+            item["updated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
             _save_json(BLOCKED_FILE, blocked_list)
             return True, "IP containment rule updated"
 
@@ -67,7 +67,7 @@ def block_ip(ip, reason="Automated AI Threat Detection", threat_level="HIGH", ri
         "risk_score": risk_score,
         "status": "ACTIVE",
         "blocked_by": blocked_by,
-        "blocked_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "blocked_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         "iptables_cmd": f"iptables -A INPUT -s {ip} -j DROP",
         "netsh_cmd": f'netsh advfirewall firewall add rule name="SentinelX_Block_{ip}" dir=in action=block remoteip={ip}'
     }
@@ -115,19 +115,19 @@ def update_incident_status(ip, status, analyst_notes="", threat_level="HIGH", ri
             inc["status"] = status
             if analyst_notes:
                 inc["analyst_notes"] = analyst_notes
-            inc["updated_at"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+            inc["updated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
             _save_json(INCIDENTS_FILE, incidents)
             return True
 
     new_inc = {
-        "case_id": f"INC-{ip.replace('.', '')[-6:]}-{datetime.utcnow().strftime('%M%S')}",
+        "case_id": f"INC-{ip.replace('.', '')[-6:]}-{datetime.now(timezone.utc).strftime('%M%S')}",
         "ip": ip,
         "status": status,
         "threat_level": threat_level,
         "risk_score": risk_score,
         "analyst_notes": analyst_notes or "Initial incident triage created by SentinelX AI.",
-        "created_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
-        "updated_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+        "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     }
     incidents.insert(0, new_inc)
     _save_json(INCIDENTS_FILE, incidents)

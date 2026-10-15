@@ -3,7 +3,7 @@ import csv
 import json
 import joblib
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import Flask, render_template, request, jsonify, redirect, url_for, Response
 
 from utils.detector import (
@@ -198,7 +198,17 @@ def get_telemetry_analytics():
                 pass
 
     if not analyzed_items:
-        for sip in ["192.168.1.52", "192.168.1.50", "192.168.1.10"]:
+        # Use real public threat-actor IPs for realistic geo-mapping on the attack map
+        demo_public_ips = [
+            "185.220.101.47",   # Tor exit node — Russia / Netherlands
+            "103.251.167.10",   # China Unicom threat range
+            "194.165.16.77",    # Known bulletproof hosting — Germany
+            "177.54.144.33",    # Brazil Claro telecom threat range
+            "45.142.212.100",   # Netherlands Serverion hosting
+            "2.57.122.219",     # Eastern Europe malware C2
+            "91.109.190.11",    # Sweden Tor relay
+        ]
+        for sip in demo_public_ips:
             analyzed_items.append(analyze_ip_security(sip))
 
     high_c = sum(1 for i in analyzed_items if i["level"] == "HIGH")
@@ -531,48 +541,53 @@ def simulate():
 
     if request.method == "POST":
         attack_type = request.form.get("attack_type", "custom")
-        now_ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        now_ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        # Use a deterministic but varied offset from the timestamp hash
+        _hash_offset = abs(hash(now_ts)) % 200
 
-        # Preset attack profiles
+        # Preset attack profiles — use real public IP ranges for accurate geo on map
         if attack_type == "brute_force":
             attack_name = "SSH / RDP Brute Force"
-            ip = f"192.168.1.{100 + (hash(now_ts) % 50)}"
+            ip = f"185.220.101.{_hash_offset + 1}"      # Known Tor / RU botnet range
             failed = 28
             reqs = 65
             unusual = 0
             net = 95
         elif attack_type == "ddos_flood":
             attack_name = "Layer 7 HTTP DDoS Flood"
-            ip = f"10.0.99.{hash(now_ts) % 200}"
+            ip = f"103.251.167.{_hash_offset % 200 + 1}"  # China botnet range
             failed = 2
             reqs = 1450
             unusual = 0
             net = 2600
         elif attack_type == "data_exfiltration":
             attack_name = "Off-Hours Lateral Movement & Data Exfiltration"
-            ip = f"172.16.4.{hash(now_ts) % 100}"
+            ip = f"194.165.16.{_hash_offset % 100 + 1}"   # EU bulletproof hosting
             failed = 14
             reqs = 380
             unusual = 1
             net = 1850
         elif attack_type == "port_scan":
             attack_name = "Port Scan & Service Enumeration"
-            ip = f"192.168.2.{hash(now_ts) % 80}"
+            ip = f"45.142.212.{_hash_offset % 80 + 1}"     # Netherlands hosting
             failed = 6
             reqs = 260
             unusual = 0
             net = 380
         elif attack_type == "benign":
             attack_name = "Benign Authorized Employee Session"
-            ip = f"192.168.1.{10 + (hash(now_ts) % 5)}"
+            ip = f"8.8.{_hash_offset % 5 + 1}.{10 + (_hash_offset % 5)}"  # Google public range
             failed = 0
             reqs = 15
             unusual = 0
             net = 24
         else:
-            # Custom vector
+            # Custom vector — use entered IP or a public default
             attack_name = "Custom Simulated Vector"
-            ip = request.form.get("source_ip", "10.0.8.99").strip()
+            raw_ip = request.form.get("source_ip", "185.220.101.99").strip()
+            # If the user entered a private IP, map it to a public equivalent
+            from utils.threat_intel import is_private_ip as _is_priv
+            ip = raw_ip if not _is_priv(raw_ip) else "185.220.101.99"
             failed = int(request.form.get("failed_attempts", 12))
             reqs = int(request.form.get("request_count", 350))
             unusual = int(request.form.get("unusual_hour", 0))
@@ -678,8 +693,8 @@ def firewall_unblock(ip):
 
 @app.route("/settings", methods=["GET", "POST"])
 def soc_settings():
-    msg = None
-    success = True
+    msg = request.args.get("msg")
+    success = request.args.get("success", "1") == "1"
     if request.method == "POST":
         webhook_url = request.form.get("webhook_url", "").strip()
         enabled = bool(request.form.get("enabled"))
@@ -689,7 +704,9 @@ def soc_settings():
         success = ok
 
     config = get_webhook_config()
-    return render_template("settings.html", config=config, message=msg, success=success)
+    remote_cfg = _load_remote_config()
+    return render_template("settings.html", config=config, remote_config=remote_cfg, message=msg, success=success)
+
 
 
 @app.route("/settings/test", methods=["POST"])
@@ -697,7 +714,9 @@ def soc_settings_test():
     config = get_webhook_config()
     url = config.get("webhook_url", "")
     ok, note = test_webhook_url(url)
-    return render_template("settings.html", config=config, message=note, success=ok)
+    remote_cfg = _load_remote_config()
+    return render_template("settings.html", config=config, remote_config=remote_cfg, message=note, success=ok)
+
 
 
 @app.route("/api/webhook/dispatch", methods=["POST"])
@@ -741,7 +760,7 @@ def upload_logs():
             if "source_ip" not in df.columns:
                 df["source_ip"] = [f"192.168.1.{i+1}" for i in range(len(df))]
             if "timestamp" not in df.columns:
-                df["timestamp"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                df["timestamp"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
             log_path = "data/logs.csv"
             df[["timestamp", "source_ip", "failed_attempts", "request_count", "unusual_hour", "network_activity"]].to_csv(
@@ -822,7 +841,7 @@ def reports():
 def incident_report(ip):
     clean_ip = ip.strip()
     result = analyze_ip_security(clean_ip)
-    generated_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     is_blocked, _ = is_ip_blocked(clean_ip)
 
     return render_template(
@@ -864,7 +883,7 @@ def export_json():
 
     export_payload = {
         "system": "SentinelX AI Threat Detection & Response SIEM",
-        "generated_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         "total_endpoints": len(analytics["analyzed_items"]),
         "threat_summary": analytics["chart_stats"],
         "quarantined_hosts": blocked,
@@ -885,7 +904,7 @@ def export_single_report(ip):
 
     payload = {
         "report_id": f"RPT-{clean_ip.replace('.', '')}-2026",
-        "generated_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         "assessment": result,
         "mitre_framework": result.get("mitre_mappings", []),
         "firewall_mitigation_rules": fw_cmds
@@ -900,5 +919,98 @@ def api_analytics():
     return jsonify(get_telemetry_analytics())
 
 
+# ==========================================
+# LIVE GEO FEED — Real-time attack polling
+# ==========================================
+
+@app.route("/api/geo-live")
+def api_geo_live():
+    """
+    Returns the latest geo-tagged attack events for the map to poll.
+    Includes the most recent 20 unique attack sources with full metadata.
+    """
+    analytics = get_telemetry_analytics()
+    events = analytics.get("geo_markers", [])
+    # Enrich with vector info from analyzed_items
+    ip_to_vector = {}
+    for item in analytics.get("analyzed_items", []):
+        if item["failed_attempts"] >= 10:
+            v = "SSH / RDP Brute Force"
+        elif item["request_count"] >= 300:
+            v = "Layer 7 HTTP DDoS Flood"
+        elif str(item.get("unusual_hour", 0)) in ["1", 1]:
+            v = "Off-Hours Data Exfiltration"
+        elif item["network_activity"] >= 400:
+            v = "High Bandwidth Ingress Flood"
+        elif item.get("ml_anomaly"):
+            v = "Isolation Forest AI Anomaly"
+        else:
+            v = "Ingress Reconnaissance Probe"
+        ip_to_vector[item["source_ip"]] = {
+            "vector": v,
+            "isp": item.get("geo", {}).get("isp", "Unknown ISP")
+        }
+    for ev in events:
+        extra = ip_to_vector.get(ev["ip"], {})
+        ev["vector"] = extra.get("vector", "Ingress Probe")
+        ev["isp"] = extra.get("isp", "Unknown ISP")
+    return jsonify({"events": events[-20:], "total": len(events)})
+
+
+# ==========================================
+# REMOTE SOC CONFIGURATION ROUTES
+# ==========================================
+
+REMOTE_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "data", "remote_config.json")
+
+
+def _load_remote_config():
+    if os.path.exists(REMOTE_CONFIG_FILE):
+        try:
+            with open(REMOTE_CONFIG_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {"tunnel_url": "", "enabled": False, "label": "Cloudflare Tunnel"}
+
+
+def _save_remote_config(cfg):
+    os.makedirs(os.path.dirname(REMOTE_CONFIG_FILE), exist_ok=True)
+    try:
+        with open(REMOTE_CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=2)
+        return True
+    except Exception:
+        return False
+
+
+@app.route("/api/remote-status")
+def api_remote_status():
+    """Returns current remote SOC tunnel config (for HUD display)."""
+    return jsonify(_load_remote_config())
+
+
+@app.route("/settings/remote", methods=["POST"])
+def save_remote_config():
+    """Saves tunnel URL and label from the settings page."""
+    tunnel_url = request.form.get("tunnel_url", "").strip()
+    label = request.form.get("remote_label", "Cloudflare Tunnel").strip()
+    enabled = bool(request.form.get("remote_enabled"))
+    cfg = {"tunnel_url": tunnel_url, "enabled": enabled, "label": label}
+    ok = _save_remote_config(cfg)
+    msg = "Remote SOC configuration saved!" if ok else "Error saving remote config."
+    return redirect(url_for("soc_settings", msg=msg, success="1" if ok else "0"))
+
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template("error.html", code=404, title="Endpoint Not Found", message="The requested SOC module or route does not exist."), 404
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template("error.html", code=500, title="Internal Sensor Error", message="An unexpected exception occurred during SIEM telemetry processing."), 500
+
+
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5000)

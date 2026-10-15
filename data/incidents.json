@@ -1,5 +1,35 @@
 [
   {
+    "case_id": "INC-010199-4719",
+    "ip": "185.220.101.99",
+    "status": "Resolved",
+    "threat_level": "HIGH",
+    "risk_score": null,
+    "analyst_notes": "Firewall containment rule lifted by SOC analyst.",
+    "created_at": "2026-10-15 07:47:19 UTC",
+    "updated_at": "2026-10-15 07:47:19 UTC"
+  },
+  {
+    "case_id": "INC-010147-2127",
+    "ip": "185.220.101.47",
+    "status": "Resolved",
+    "threat_level": "HIGH",
+    "risk_score": null,
+    "analyst_notes": "test",
+    "created_at": "2026-10-15 07:21:27 UTC",
+    "updated_at": "2026-10-15 07:21:27 UTC"
+  },
+  {
+    "case_id": "INC-10001-2127",
+    "ip": "10.0.0.1",
+    "status": "Resolved",
+    "threat_level": "HIGH",
+    "risk_score": null,
+    "analyst_notes": "Firewall containment rule lifted by SOC analyst.",
+    "created_at": "2026-10-15 07:21:27 UTC",
+    "updated_at": "2026-10-15 07:21:27 UTC"
+  },
+  {
     "case_id": "INC-168131-1156",
     "ip": "192.168.13.1",
     "status": "Contained",
@@ -65,9 +95,9 @@
     "status": "Contained",
     "threat_level": "HIGH",
     "risk_score": 100,
-    "analyst_notes": "High volume brute force + data exfiltration detected off-hours. IP isolated and added to permanent firewall blocklist.",
+    "analyst_notes": "SOAR Playbook PB-BRUTE-01 (Automated Brute Force & Credential Spray Containment) executed automatically.",
     "created_at": "2026-08-20 01:25:00 UTC",
-    "updated_at": "2026-08-20 01:30:00 UTC"
+    "updated_at": "2026-10-15 07:47:19 UTC"
   },
   {
     "case_id": "INC-001950-0230",

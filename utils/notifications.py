@@ -1,7 +1,7 @@
 import os
 import json
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "webhook_config.json")
 
@@ -76,7 +76,7 @@ def dispatch_webhook_alert(incident_data):
                     {"name": "🛠 Containment Command", "value": f"`iptables -A INPUT -s {ip} -j DROP`", "inline": False}
                 ],
                 "footer": {"text": "SentinelX Cyber Security Operations Center • Automated Telemetry Alert"},
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         ]
     }
@@ -102,7 +102,7 @@ def dispatch_webhook_alert(incident_data):
 
     # Record history
     history_entry = {
-        "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         "ip": ip,
         "level": level,
         "risk": risk,

@@ -300,6 +300,7 @@
             <small style="color: #10b981; font-weight: bold;">● STREAMING</small>
         </div>
         <div class="attack-feed-list" id="attackFeed">
+            {% if attack_events %}
             {% for item in attack_events %}
             <div class="attack-feed-item {{ item.level|lower }}" onclick="focusHost({{ item.lat }}, {{ item.lon }}, '{{ item.ip }}', '{{ item.country }}', '{{ item.level }}', '{{ item.risk }}', '{{ item.vector }}');">
                 <div class="feed-header">
@@ -313,6 +314,13 @@
                 <div style="font-size: 10px; color: #64748b; margin-top: 3px;">{{ item.city }}, {{ item.country }} • {{ item.isp }}</div>
             </div>
             {% endfor %}
+            {% else %}
+            <div style="text-align:center; color:#64748b; padding:20px; font-size:13px;">
+                <div style="font-size:28px; margin-bottom:8px;">🌐</div>
+                <strong>No attack events yet.</strong><br>
+                <span>Run the Attack Simulator to inject live threat data.</span>
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -362,6 +370,9 @@
             <a href="/simulate" class="hud-btn hud-btn-danger">💥 Attack Simulator</a>
             <a href="/firewall" class="hud-btn">🛡️ Firewall Console</a>
             <a href="/recon" class="hud-btn">🌐 Recon Scanner</a>
+            <a href="/settings#remote-soc" class="hud-btn" style="background:rgba(56,189,248,0.15); border-color:#38bdf8; color:#38bdf8;" id="btnRemote">
+                📡 Remote SOC
+            </a>
         </div>
     </div>
 
@@ -506,10 +517,12 @@ function simulateIncomingThreatPacket(forceHigh = false) {
 
     const sampleVectors = ['Layer 7 HTTP DDoS Flood', 'SSH Credential Brute Force', 'Port 3389 RDP Probe', 'Off-Hours Bulk Exfiltration', 'Tor Relay Reconnaissance'];
     const sampleOrigins = [
-        { ip: '185.220.101.' + Math.floor(Math.random() * 250), flag: '🇷🇺', country: 'Russia', city: 'Saint Petersburg', isp: 'Selectel Datacenter', lat: 59.9343, lon: 30.3351 },
-        { ip: '103.251.167.' + Math.floor(Math.random() * 250), flag: '🇨🇳', country: 'China', city: 'Beijing', isp: 'China Unicom Backbone', lat: 39.9042, lon: 116.4074 },
-        { ip: '194.26.29.' + Math.floor(Math.random() * 250), flag: '🇳🇱', country: 'Netherlands', city: 'Rotterdam', isp: 'Serverion Hosting', lat: 51.9244, lon: 4.4777 },
-        { ip: '177.54.144.' + Math.floor(Math.random() * 250), flag: '🇧🇷', country: 'Brazil', city: 'Rio de Janeiro', isp: 'Embratel Telecom', lat: -22.9068, lon: -43.1729 }
+        { ip: '185.220.101.' + Math.floor(Math.random() * 250 + 1), flag: '🇷🇺', country: 'Russia', city: 'Saint Petersburg', isp: 'Selectel Datacenter', lat: 59.9343, lon: 30.3351 },
+        { ip: '103.251.167.' + Math.floor(Math.random() * 250 + 1), flag: '🇨🇳', country: 'China', city: 'Beijing', isp: 'China Unicom Backbone', lat: 39.9042, lon: 116.4074 },
+        { ip: '194.165.16.' + Math.floor(Math.random() * 100 + 1), flag: '🇩🇪', country: 'Germany', city: 'Frankfurt', isp: 'Hetzner Online GmbH', lat: 50.1109, lon: 8.6821 },
+        { ip: '177.54.144.' + Math.floor(Math.random() * 250 + 1), flag: '🇧🇷', country: 'Brazil', city: 'Rio de Janeiro', isp: 'Embratel Telecom', lat: -22.9068, lon: -43.1729 },
+        { ip: '45.142.212.' + Math.floor(Math.random() * 80 + 1), flag: '🇳🇱', country: 'Netherlands', city: 'Amsterdam', isp: 'Serverion Hosting', lat: 52.3676, lon: 4.9041 },
+        { ip: '91.109.190.' + Math.floor(Math.random() * 50 + 1), flag: '🇸🇪', country: 'Sweden', city: 'Stockholm', isp: 'Mullvad Tor Relay', lat: 59.3293, lon: 18.0686 }
     ];
 
     const pick = sampleOrigins[Math.floor(Math.random() * sampleOrigins.length)];
@@ -517,6 +530,25 @@ function simulateIncomingThreatPacket(forceHigh = false) {
     const isHigh = forceHigh || Math.random() > 0.4;
     const level = isHigh ? 'HIGH' : 'MEDIUM';
     const risk = isHigh ? Math.floor(Math.random() * 25) + 75 : Math.floor(Math.random() * 25) + 40;
+
+    // Add to map arc
+    if (map) {
+        const color = isHigh ? '#ef4444' : '#f59e0b';
+        const icon = L.divIcon({
+            className: 'threat-origin-marker',
+            html: `<div class="pulse-marker ${isHigh ? 'pulse-danger' : ''}"></div>`,
+            iconSize: [14, 14], iconAnchor: [7, 7]
+        });
+        const m = L.marker([pick.lat, pick.lon], { icon }).addTo(map);
+        m.bindPopup(`<div style="font-size:12px;"><strong>${pick.flag} ${pick.ip}</strong><br>${pick.city}, ${pick.country}<br><span style="color:${color}"><strong>${level} (${risk}/100)</strong></span></div>`);
+        attackArcs.push(m);
+        if (arcsEnabled) {
+            const mid = [(pick.lat + targetCoords[0]) / 2 + Math.abs(pick.lon - targetCoords[1]) * 0.12, (pick.lon + targetCoords[1]) / 2];
+            const pts = getQuadraticBezierPoints([pick.lat, pick.lon], mid, targetCoords, 30);
+            const arc = L.polyline(pts, { color, weight: 2, opacity: 0.65, dashArray: '6, 8', lineCap: 'round' }).addTo(map);
+            attackArcs.push(arc);
+        }
+    }
 
     const newFeedItem = document.createElement('div');
     newFeedItem.className = `attack-feed-item ${level.toLowerCase()}`;
@@ -533,12 +565,85 @@ function simulateIncomingThreatPacket(forceHigh = false) {
         <div style="font-size: 10px; color: #64748b; margin-top: 3px;">${pick.city}, ${pick.country} • ${pick.isp}</div>
     `;
 
+    // Remove empty state if present
+    const emptyState = feed.querySelector('div[style*="text-align:center"]');
+    if (emptyState) emptyState.remove();
+
     feed.insertBefore(newFeedItem, feed.firstChild);
-    if (feed.children.length > 25) {
-        feed.removeChild(feed.lastChild);
-    }
+    if (feed.children.length > 25) feed.removeChild(feed.lastChild);
+
+    // Increment attack counter
+    const countEl = document.getElementById('hudAttackCount');
+    if (countEl) countEl.textContent = (parseInt(countEl.textContent || '0') + 1);
 }
+
+// ─── Live Geo Polling from Server ────────────────────────────────────────────
+let _knownIps = new Set(mapEvents.map(e => e.ip));
+
+function pollLiveAttacks() {
+    fetch('/api/geo-live')
+        .then(r => r.json())
+        .then(data => {
+            (data.events || []).forEach(ev => {
+                if (_knownIps.has(ev.ip)) return;
+                _knownIps.add(ev.ip);
+                // Add to map
+                if (map && ev.lat && ev.lon) {
+                    const isH = ev.level === 'HIGH';
+                    const col = isH ? '#ef4444' : (ev.level === 'MEDIUM' ? '#f59e0b' : '#10b981');
+                    const ic = L.divIcon({
+                        className: 'threat-origin-marker',
+                        html: `<div class="pulse-marker ${isH ? 'pulse-danger' : ''}"></div>`,
+                        iconSize: [14, 14], iconAnchor: [7, 7]
+                    });
+                    const mk = L.marker([ev.lat, ev.lon], { icon: ic }).addTo(map);
+                    mk.bindPopup(`<div style="font-size:12px;padding:4px;"><strong>${ev.flag||'🌐'} ${ev.ip}</strong><br>${ev.city||''}, ${ev.country||''}<br>ISP: <strong>${ev.isp||''}</strong><br>Vector: <strong>${ev.vector||''}</strong><br><span style="color:${col}"><strong>${ev.level} (${ev.risk}/100)</strong></span><br><div style="margin-top:5px;"><a href="/analyze?source_ip=${ev.ip}" style="color:#0284c7;">Analyze</a> • <a href="/recon?ip=${ev.ip}" style="color:#0284c7;">Recon</a></div></div>`);
+                    attackArcs.push(mk);
+                    if (arcsEnabled) {
+                        const mid = [(ev.lat + targetCoords[0]) / 2 + Math.abs(ev.lon - targetCoords[1]) * 0.12, (ev.lon + targetCoords[1]) / 2];
+                        const pts = getQuadraticBezierPoints([ev.lat, ev.lon], mid, targetCoords, 30);
+                        attackArcs.push(L.polyline(pts, { color: col, weight: isH ? 2.5 : 1.8, opacity: 0.7, dashArray: '6, 8' }).addTo(map));
+                    }
+                    // Feed card
+                    const feed = document.getElementById('attackFeed');
+                    if (feed) {
+                        const el = document.createElement('div');
+                        el.className = `attack-feed-item ${(ev.level||'low').toLowerCase()}`;
+                        el.onclick = () => focusHost(ev.lat, ev.lon, ev.ip, ev.country, ev.level, ev.risk, ev.vector);
+                        el.innerHTML = `<div class="feed-header"><span>${ev.flag||'🌐'} <code>${ev.ip}</code></span><span class="badge ${(ev.level||'low').toLowerCase()}">${ev.level}</span></div><div class="feed-meta"><span>${ev.vector||''}</span><span>Risk: ${ev.risk}/100</span></div><div style="font-size:10px;color:#64748b;margin-top:3px;">${ev.city||''}, ${ev.country||''} • ${ev.isp||''}</div>`;
+                        const empty = feed.querySelector('div[style*="text-align:center"]');
+                        if (empty) empty.remove();
+                        feed.insertBefore(el, feed.firstChild);
+                        if (feed.children.length > 25) feed.removeChild(feed.lastChild);
+                    }
+                }
+            });
+            // Update total counter
+            const countEl = document.getElementById('hudAttackCount');
+            if (countEl && data.total) countEl.textContent = data.total + 45;
+        })
+        .catch(() => {});
+}
+
+// Poll server every 10 seconds for new real attack events
+setInterval(pollLiveAttacks, 10000);
+
+// Check remote SOC config and show banner if tunnel is active
+fetch('/api/remote-status')
+    .then(r => r.json())
+    .then(cfg => {
+        if (cfg.enabled && cfg.tunnel_url) {
+            const bar = document.getElementById('btnRemote');
+            if (bar) {
+                bar.textContent = '📡 Remote: ' + cfg.tunnel_url.replace('https://', '').substring(0, 22) + '…';
+                bar.href = cfg.tunnel_url;
+                bar.target = '_blank';
+            }
+        }
+    })
+    .catch(() => {});
 </script>
 
 </body>
 </html>
+

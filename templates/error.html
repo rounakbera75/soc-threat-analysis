@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentinelX | {{ code }} - {{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>🛡 SentinelX</h2>
+    <p>AI Threat Detection</p>
+    <a href="/" class="nav">📊 Dashboard</a>
+    <a href="/map" target="_blank" class="nav">🌍 Live Threat Map</a>
+    <a href="/#analyze-section" class="nav">🔍 Threat Detection</a>
+    <a href="/recon" class="nav">🌐 Recon Scanner</a>
+    <a href="/simulate" class="nav">⚡ Attack Simulator</a>
+    <a href="/firewall" class="nav">🛡️ Firewall &amp; Blocklist</a>
+    <a href="/logs" class="nav">📋 Security Logs</a>
+    <a href="/reports" class="nav">📑 Security Reports</a>
+    <a href="/ai-models" class="nav">🤖 AI Models</a>
+    <a href="/mitre" class="nav">🎯 MITRE ATT&amp;CK</a>
+    <a href="/playbooks" class="nav">📘 SOAR Playbooks</a>
+    <a href="/settings" class="nav">⚙️ SOC Settings</a>
+</div>
+
+<div class="main">
+    <header>
+        <div>
+            <h1>Security Operations Center • Alert</h1>
+            <p>HTTP {{ code }} System Status</p>
+        </div>
+        <div class="online" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+            ● HTTP {{ code }}
+        </div>
+    </header>
+
+    <section class="panel" style="text-align: center; padding: 60px 30px; border-left: 4px solid #ef4444;">
+        <div style="font-size: 54px; margin-bottom: 15px;">🛡️</div>
+        <h2 style="font-size: 28px; color: #ef4444; margin-bottom: 10px;">{{ code }} — {{ title }}</h2>
+        <p style="color: #94a3b8; font-size: 15px; max-width: 500px; margin: 0 auto 30px auto; line-height: 1.6;">
+            {{ message }}
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <a href="/" class="btn-report btn-primary-report">
+                📊 Return to Dashboard
+            </a>
+            <a href="/logs" class="btn-report btn-secondary-report">
+                📋 View Security Logs
+            </a>
+        </div>
+    </section>
+
+    <footer>
+        SentinelX • Enterprise Cyber Security Operations Center &amp; Threat Intelligence
+    </footer>
+</div>
+
+</body>
+</html>

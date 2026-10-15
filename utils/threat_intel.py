@@ -3,7 +3,7 @@ import json
 import socket
 import urllib.request
 import urllib.parse
-from datetime import datetime
+from datetime import datetime, timezone
 
 CACHE_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "threat_intel_cache.json")
 
@@ -152,7 +152,7 @@ def get_ip_geolocation(ip):
         res = PRIVATE_IP_GEO_MAPPINGS[clean_ip].copy()
         res["ip"] = clean_ip
         res["is_private"] = True
-        res["query_time"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+        res["query_time"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
         cache[clean_ip] = res
         _save_cache(cache)
         return res
@@ -183,7 +183,7 @@ def get_ip_geolocation(ip):
             "is_tor": (hash_val % 4 == 0),
             "reputation_score": (hash_val % 60) + 30,
             "threat_category": "Ingress Network Probe",
-            "query_time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+            "query_time": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
         }
         cache[clean_ip] = res
         _save_cache(cache)
@@ -213,7 +213,7 @@ def get_ip_geolocation(ip):
                     "is_tor": False,
                     "reputation_score": 50,
                     "threat_category": "Public Internet Host",
-                    "query_time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+                    "query_time": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
                 }
                 cache[clean_ip] = res
                 _save_cache(cache)
@@ -238,7 +238,7 @@ def get_ip_geolocation(ip):
         "is_tor": False,
         "reputation_score": 50,
         "threat_category": "External WAN Endpoint",
-        "query_time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+        "query_time": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     }
     return fallback
 
@@ -290,5 +290,5 @@ def perform_recon_scan(ip):
         "geolocation": geo,
         "attack_surface_score": attack_surface_score,
         "open_ports": common_ports,
-        "scan_timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+        "scan_timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     }

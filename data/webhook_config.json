@@ -1,9 +1,121 @@
 {
-  "webhook_url": "",
-  "enabled": false,
+  "webhook_url": "https://test.com/hook",
+  "enabled": true,
   "min_severity": "HIGH",
-  "alerts_sent": 2,
+  "alerts_sent": 16,
   "history": [
+    {
+      "timestamp": "2026-10-15 07:47:24 UTC",
+      "ip": "185.220.101.47",
+      "level": "HIGH",
+      "risk": 70,
+      "delivery_status": "FAILED",
+      "delivery_note": "HTTP Dispatch Error: <urlopen error [Errno 11001] getaddrinfo failed>"
+    },
+    {
+      "timestamp": "2026-10-15 07:47:19 UTC",
+      "ip": "192.168.1.52",
+      "level": "HIGH",
+      "risk": 95,
+      "delivery_status": "FAILED",
+      "delivery_note": "HTTP Dispatch Error: <urlopen error [Errno 11001] getaddrinfo failed>"
+    },
+    {
+      "timestamp": "2026-10-15 07:47:19 UTC",
+      "ip": "194.165.16.77",
+      "level": "HIGH",
+      "risk": 100,
+      "delivery_status": "FAILED",
+      "delivery_note": "HTTP Dispatch Error: <urlopen error [Errno 11001] getaddrinfo failed>"
+    },
+    {
+      "timestamp": "2026-10-15 07:47:19 UTC",
+      "ip": "185.220.101.47",
+      "level": "HIGH",
+      "risk": 70,
+      "delivery_status": "FAILED",
+      "delivery_note": "HTTP Dispatch Error: <urlopen error [Errno 11001] getaddrinfo failed>"
+    },
+    {
+      "timestamp": "2026-10-15 07:47:19 UTC",
+      "ip": "185.220.101.47",
+      "level": "HIGH",
+      "risk": 70,
+      "delivery_status": "FAILED",
+      "delivery_note": "HTTP Dispatch Error: <urlopen error [Errno 11001] getaddrinfo failed>"
+    },
+    {
+      "timestamp": "2026-10-15 07:46:58 UTC",
+      "ip": "194.165.16.77",
+      "level": "HIGH",
+      "risk": 100,
+      "delivery_status": "FAILED",
+      "delivery_note": "HTTP Dispatch Error: <urlopen error [Errno 11001] getaddrinfo failed>"
+    },
+    {
+      "timestamp": "2026-10-15 07:46:58 UTC",
+      "ip": "185.220.101.47",
+      "level": "HIGH",
+      "risk": 70,
+      "delivery_status": "FAILED",
+      "delivery_note": "HTTP Dispatch Error: <urlopen error [Errno 11001] getaddrinfo failed>"
+    },
+    {
+      "timestamp": "2026-10-15 07:46:58 UTC",
+      "ip": "194.165.16.77",
+      "level": "HIGH",
+      "risk": 100,
+      "delivery_status": "FAILED",
+      "delivery_note": "HTTP Dispatch Error: <urlopen error [Errno 11001] getaddrinfo failed>"
+    },
+    {
+      "timestamp": "2026-10-15 07:46:58 UTC",
+      "ip": "185.220.101.47",
+      "level": "HIGH",
+      "risk": 70,
+      "delivery_status": "FAILED",
+      "delivery_note": "HTTP Dispatch Error: <urlopen error [Errno 11001] getaddrinfo failed>"
+    },
+    {
+      "timestamp": "2026-10-15 07:46:58 UTC",
+      "ip": "194.165.16.77",
+      "level": "HIGH",
+      "risk": 100,
+      "delivery_status": "FAILED",
+      "delivery_note": "HTTP Dispatch Error: <urlopen error [Errno 11001] getaddrinfo failed>"
+    },
+    {
+      "timestamp": "2026-10-15 07:46:57 UTC",
+      "ip": "185.220.101.47",
+      "level": "HIGH",
+      "risk": 70,
+      "delivery_status": "FAILED",
+      "delivery_note": "HTTP Dispatch Error: <urlopen error [Errno 11001] getaddrinfo failed>"
+    },
+    {
+      "timestamp": "2026-10-15 07:21:27 UTC",
+      "ip": "185.220.101.47",
+      "level": "HIGH",
+      "risk": 70,
+      "delivery_status": "FAILED",
+      "delivery_note": "HTTP Dispatch Error: <urlopen error [Errno 11001] getaddrinfo failed>"
+    },
+    {
+      "timestamp": "2026-10-15 07:21:27 UTC",
+      "ip": "185.220.101.47",
+      "level": "HIGH",
+      "risk": 70,
+      "delivery_status": "FAILED",
+      "delivery_note": "HTTP Dispatch Error: <urlopen error [Errno 11001] getaddrinfo failed>"
+    },
+    {
+      "timestamp": "2026-10-15 07:21:27 UTC",
+      "ip": "192.168.1.52",
+      "level": "HIGH",
+      "risk": 95,
+      "delivery_status": "SIMULATED",
+      "delivery_note": "No external webhook URL configured; simulated in internal SOC alert queue."
+    },
     {
       "timestamp": "2026-08-29 07:11:56 UTC",
       "ip": "192.168.13.1",

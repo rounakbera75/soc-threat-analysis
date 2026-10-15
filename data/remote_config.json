@@ -1,0 +1,5 @@
+{
+  "tunnel_url": "https://test.trycloudflare.com",
+  "enabled": true,
+  "label": "Test"
+}
