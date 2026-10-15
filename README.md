@@ -1,5 +1,7 @@
 # 🛡️ SentinelX: Autonomous AI Threat Intelligence & Next-Gen SIEM
+### ⚡ Architected & Engineered by **[Rounak Bera](https://github.com/rounakbera75)**
 
+[![Architect](https://img.shields.io/badge/Lead%20Architect-Rounak%20Bera-38bdf8?style=for-the-badge&logo=shield&logoColor=white)](https://github.com/rounakbera75)
 [![Live Demo](https://img.shields.io/badge/🚀_PERMANENT_LIVE_DEMO-OPEN_IN_BROWSER-00ff66?style=for-the-badge&logo=google-chrome&logoColor=black)](https://rounakbera75.github.io/soc-threat-analysis/)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/rounakbera75/soc-threat-analysis)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
@@ -11,7 +13,7 @@
 > ### 🌐 [👉 CLICK HERE TO OPEN 24/7 PERMANENT LIVE PROJECT IN YOUR BROWSER 👈](https://rounakbera75.github.io/soc-threat-analysis/)
 > **Direct Live Link (Phone, Laptop, Tablet & Browser Ready - 24/7 Always Online)**:  
 > 🔗 **[https://rounakbera75.github.io/soc-threat-analysis/](https://rounakbera75.github.io/soc-threat-analysis/)**  
-> *(Zero installation or setup needed — 100% accessible worldwide from any device at any time!)*
+> *(Engineered by **Rounak Bera** — 100% accessible worldwide from any device at any time!)*
 
 ---
 
