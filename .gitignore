@@ -1,0 +1,18 @@
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Binaries
+cloudflared.exe
+*.exe
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# System
+.DS_Store
+.idea/
+.vscode/
+utils/

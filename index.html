@@ -1048,12 +1048,109 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
     // --- GLOBAL DATA STRUCTURES & STATE ---
     let blockedIps = ["192.168.1.52", "45.154.255.88", "185.220.101.5", "103.203.57.18"];
     let threatLogs = [
-        { time: "2026-08-29 20:38:12", ip: "192.168.1.52", failed: 18, req: 380, hour: 1, net: 840, verdict: "CRITICAL", vector: "SSH_BRUTE_FORCE" },
-        { time: "2026-08-29 20:37:45", ip: "45.154.255.88", failed: 2, req: 1420, hour: 0, net: 2900, verdict: "CRITICAL", vector: "DDOS_FLOOD" },
-        { time: "2026-08-29 20:36:20", ip: "185.220.101.5", failed: 6, req: 95, hour: 1, net: 1850, verdict: "HIGH", vector: "DATA_EXFILTRATION" },
-        { time: "2026-08-29 20:35:10", ip: "103.203.57.18", failed: 4, req: 450, hour: 0, net: 310, verdict: "MEDIUM", vector: "PORT_RECON_SCAN" },
-        { time: "2026-08-29 20:34:02", ip: "192.168.1.100", failed: 0, req: 45, hour: 0, net: 120, verdict: "NORMAL", vector: "NORMAL" }
+        { time: "2026-10-15 13:10:12", ip: "192.168.1.52", failed: 18, req: 380, hour: 1, net: 840, verdict: "CRITICAL", vector: "SSH_BRUTE_FORCE" },
+        { time: "2026-10-15 13:08:45", ip: "45.154.255.88", failed: 2, req: 1520, hour: 0, net: 2900, verdict: "CRITICAL", vector: "DDOS_FLOOD" },
+        { time: "2026-10-15 13:05:20", ip: "185.220.101.5", failed: 6, req: 95, hour: 1, net: 1850, verdict: "HIGH", vector: "DATA_EXFILTRATION" },
+        { time: "2026-10-15 13:02:10", ip: "103.203.57.18", failed: 4, req: 480, hour: 0, net: 340, verdict: "MEDIUM", vector: "PORT_RECON_SCAN" },
+        { time: "2026-10-15 12:58:02", ip: "192.168.1.100", failed: 0, req: 45, hour: 0, net: 120, verdict: "NORMAL", vector: "NORMAL" }
     ];
+
+    // Comprehensive Threat Intelligence Knowledge Base
+    const IP_DATABASE = {
+        "192.168.1.52": {
+            country: "Russia", flag: "🇷🇺", city: "Moscow", isp: "Rostelecom AS12389", as: "AS12389",
+            is_tor: false, vector: "SSH Brute Force Credential Spray",
+            failed: 18, req: 380, hour: 1, net: 840, cvss: "9.2 (Critical)",
+            mitre: "T1110.001 - Password Spraying",
+            reason: "Excessive failed authentications (18 attempts) detected from suspect endpoint during off-peak hours.",
+            ports: [
+                { port: "22/TCP", service: "OpenSSH 8.2p1", status: "OPEN (EXPOSED)", badge: "high", cve: "CVE-2023-38408 (Remote Code Execution)" },
+                { port: "80/TCP", service: "nginx 1.18.0", status: "OPEN", badge: "med", cve: "HTTP Header Smuggling" },
+                { port: "443/TCP", service: "OpenSSL TLS 1.3", status: "OPEN (SECURE)", badge: "low", cve: "No active exploits detected" },
+                { port: "3389/TCP", service: "MS RDP", status: "OPEN (CRITICAL)", badge: "high", cve: "CVE-2019-0708 (BlueKeep Pre-Auth RCE)" }
+            ]
+        },
+        "45.154.255.88": {
+            country: "China", flag: "🇨🇳", city: "Shenzhen", isp: "Chinanet AS4134", as: "AS4134",
+            is_tor: false, vector: "Layer 7 HTTP Flood DDoS",
+            failed: 2, req: 1520, hour: 0, net: 2900, cvss: "9.8 (Critical)",
+            mitre: "T1498.001 - Direct Network Flood DDoS",
+            reason: "Volumetric HTTP GET/POST flood exceeding 1,500 req/min saturating ingress pipeline.",
+            ports: [
+                { port: "80/TCP", service: "nginx DDoS cluster", status: "FLOODING", badge: "high", cve: "Volumetric Layer 7 Flood" },
+                { port: "443/TCP", service: "TLS 1.2 Handshake", status: "OPEN", badge: "med", cve: "TLS renegotiation exhaustion" }
+            ]
+        },
+        "185.220.101.5": {
+            country: "Netherlands", flag: "🇳🇱", city: "Amsterdam", isp: "Tor Exit Relay AS205100", as: "AS205100",
+            is_tor: true, vector: "Off-Hours Data Exfiltration Over Tor",
+            failed: 6, req: 110, hour: 1, net: 1950, cvss: "8.8 (High)",
+            mitre: "T1048.003 - Exfiltration Over Tor Relay",
+            reason: "Anomalous outbound bandwidth transfer (1,950 KB/s) via anonymized Tor exit router during 03:00 AM.",
+            ports: [
+                { port: "9001/TCP", service: "Tor ORPort", status: "OPEN (ANONYMOUS)", badge: "high", cve: "Encrypted Onion Tunneling" },
+                { port: "443/TCP", service: "HTTPS Exfil Proxy", status: "OPEN", badge: "med", cve: "Unauthorized Bulk Data Egress" }
+            ]
+        },
+        "103.203.57.18": {
+            country: "Brazil", flag: "🇧🇷", city: "São Paulo", isp: "Claro Telecom AS28573", as: "AS28573",
+            is_tor: false, vector: "Port Reconnaissance & Service Discovery",
+            failed: 4, req: 480, hour: 0, net: 340, cvss: "6.5 (Medium)",
+            mitre: "T1046 - Network Service Scanning",
+            reason: "Rapid multi-port SYN sweep detected across privileged service ranges.",
+            ports: [
+                { port: "21/TCP", service: "vsftpd 3.0.3", status: "OPEN", badge: "med", cve: "Anonymous FTP Auth Attempt" },
+                { port: "22/TCP", service: "OpenSSH 7.9", status: "OPEN (PROBING)", badge: "med", cve: "Banner Recon Scan" },
+                { port: "8080/TCP", service: "Tomcat Admin", status: "FILTERED", badge: "low", cve: "Credential Probing" }
+            ]
+        },
+        "192.168.1.100": {
+            country: "United States", flag: "🇺🇸", city: "Ashburn", isp: "Internal Secure Workstation", as: "AS14618",
+            is_tor: false, vector: "Authorized Baseline Operations",
+            failed: 0, req: 45, hour: 0, net: 120, cvss: "0.0 (Safe)",
+            mitre: "T1078 - Valid Accounts Baseline",
+            reason: "Normal operational baseline parameters detected with zero security anomalies.",
+            ports: [
+                { port: "443/TCP", service: "HTTPS Client", status: "SECURE", badge: "low", cve: "No vulnerabilities detected" }
+            ]
+        }
+    };
+
+    function getIpIntel(ip) {
+        ip = (ip || "192.168.1.52").trim();
+        if (IP_DATABASE[ip]) return IP_DATABASE[ip];
+
+        // Procedural generator for any arbitrary custom IP address
+        let hash = 0;
+        for (let i = 0; i < ip.length; i++) hash = ((hash << 5) - hash) + ip.charCodeAt(i);
+        hash = Math.abs(hash);
+
+        const countries = [
+            { c: "Germany", f: "🇩🇪", city: "Frankfurt", asn: "AS3320 Deutsche Telekom" },
+            { c: "France", f: "🇫🇷", city: "Paris", asn: "AS12322 Free SAS" },
+            { c: "Japan", f: "🇯🇵", city: "Tokyo", asn: "AS4713 NTT Communications" },
+            { c: "United Kingdom", f: "🇬🇧", city: "London", asn: "AS2856 BT Group" },
+            { c: "India", f: "🇮🇳", city: "Bengaluru", asn: "AS55836 Reliance Jio" },
+            { c: "Canada", f: "🇨🇦", city: "Toronto", asn: "AS852 TELUS" }
+        ];
+        const picked = countries[hash % countries.length];
+        const isTor = (hash % 6 === 0);
+        return {
+            country: picked.c, flag: picked.f, city: picked.city,
+            isp: picked.asn, as: picked.asn.split(' ')[0],
+            is_tor: isTor,
+            vector: (hash % 2 === 0) ? "Ingress Network Probe" : "Automated Bot Authentication",
+            failed: (hash % 12), req: (hash % 450) + 60, hour: (hash % 2), net: (hash % 750) + 120,
+            cvss: (hash % 2 === 0 ? "7.8 (High)" : "5.4 (Medium)"),
+            mitre: "T1046 - Network Service Scanning",
+            reason: "Automated scanner signatures matched remote ingress patterns.",
+            ports: [
+                { port: "80/TCP", service: "HTTP Server", status: "OPEN", badge: "med", cve: "Banner Recon Probe" },
+                { port: "443/TCP", service: "TLS Endpoint", status: "SECURE", badge: "low", cve: "No active exploits" },
+                { port: "8080/TCP", service: "Web Admin", status: "FILTERED", badge: "low", cve: "Access Restricted" }
+            ]
+        };
+    }
 
     // Threat actors for 60 FPS flight animations
     const targetHub = { name: "Ashburn SOC Gateway", lat: 38.8048, lng: -77.0469 };
@@ -1070,6 +1167,18 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
     let dashCanvas, dashCtx, wallCanvas, wallCtx;
     let pieChartInstance, barChartInstance;
     let sparks = [];
+
+    // --- GLOBAL CANVAS RESIZE CONTROLLER ---
+    function resizeCanvases() {
+        if (dashCanvas && dashCanvas.parentElement) {
+            dashCanvas.width = dashCanvas.parentElement.clientWidth;
+            dashCanvas.height = dashCanvas.parentElement.clientHeight;
+        }
+        if (wallCanvas && wallCanvas.parentElement) {
+            wallCanvas.width = wallCanvas.parentElement.clientWidth;
+            wallCanvas.height = wallCanvas.parentElement.clientHeight;
+        }
+    }
 
     // --- TAB SWITCHING CONTROLLER ---
     function switchTab(tabName, event) {
@@ -1115,27 +1224,33 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
             document.getElementById('pageSubTitle').innerText = titles[tabName][1];
         }
 
-        // Invalidate map sizes if maps are activated
+        // Synchronize browser URL hash without full reload
+        if (history.pushState) {
+            history.pushState(null, null, `#${tabName}`);
+        } else {
+            location.hash = `#${tabName}`;
+        }
+
+        // Invalidate map sizes & re-measure canvas dimensions when tabs change
         setTimeout(() => {
             if (dashMap) dashMap.invalidateSize();
             if (wallboardMap) wallboardMap.invalidateSize();
+            resizeCanvases();
         }, 150);
     }
 
     // --- LEAFLET CYBER DARK MAP INITIALIZER ---
     function initMaps() {
-        // Dashboard Map
         dashMap = L.map('dashMap', { zoomControl: false, attributionControl: false }).setView([25, 0], 2);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(dashMap);
 
-        // Wallboard Map
         wallboardMap = L.map('wallboardMap', { zoomControl: false, attributionControl: false }).setView([25, 10], 2);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(wallboardMap);
 
         // Target Ashburn SOC Pin Icon
         const socIcon = L.divIcon({
             className: 'soc-icon',
-            html: '<div style="background:#38bdf8; width:14px; height:14px; border-radius:50%; box-shadow:0 0 15px #38bdf8; border:2px solid white;"></div>',
+            html: '<div class="pulse-marker" style="background:#38bdf8; width:14px; height:14px; border-radius:50%; border:2px solid white;"></div>',
             iconSize: [14, 14]
         });
 
@@ -1146,7 +1261,7 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
         threatActors.forEach(actor => {
             const actorIcon = L.divIcon({
                 className: 'actor-icon',
-                html: `<div style="background:${actor.color}; width:10px; height:10px; border-radius:50%; box-shadow:0 0 10px ${actor.color}; border:1px solid white;"></div>`,
+                html: `<div class="pulse-marker pulse-danger" style="background:${actor.color}; width:10px; height:10px; border-radius:50%; border:1px solid white;"></div>`,
                 iconSize: [10, 10]
             });
             L.marker([actor.lat, actor.lng], { icon: actorIcon }).addTo(dashMap).bindPopup(`<b>${actor.flag} ${actor.country}</b><br>${actor.vector}`);
@@ -1155,20 +1270,10 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
 
         // Canvases
         dashCanvas = document.getElementById('dashCanvas');
-        dashCtx = dashCanvas.getContext('2d');
+        dashCtx = dashCanvas ? dashCanvas.getContext('2d') : null;
         wallCanvas = document.getElementById('wallboardCanvas');
-        wallCtx = wallCanvas.getContext('2d');
+        wallCtx = wallCanvas ? wallCanvas.getContext('2d') : null;
 
-        function resizeCanvases() {
-            if (dashCanvas) {
-                dashCanvas.width = dashCanvas.parentElement.clientWidth;
-                dashCanvas.height = dashCanvas.parentElement.clientHeight;
-            }
-            if (wallCanvas) {
-                wallCanvas.width = wallCanvas.parentElement.clientWidth;
-                wallCanvas.height = wallCanvas.parentElement.clientHeight;
-            }
-        }
         resizeCanvases();
         window.addEventListener('resize', resizeCanvases);
 
@@ -1187,11 +1292,11 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
 
     // --- 60 FPS FLIGHT ARCS RENDERER ---
     function renderArcs() {
-        if (dashCtx && dashMap && dashCanvas.width > 0) {
+        if (dashCtx && dashMap && dashCanvas && dashCanvas.width > 0) {
             dashCtx.clearRect(0, 0, dashCanvas.width, dashCanvas.height);
             renderArcGroup(dashCtx, dashMap);
         }
-        if (wallCtx && wallboardMap && wallCanvas.width > 0) {
+        if (wallCtx && wallboardMap && wallCanvas && wallCanvas.width > 0) {
             wallCtx.clearRect(0, 0, wallCanvas.width, wallCanvas.height);
             renderArcGroup(wallCtx, wallboardMap);
         }
@@ -1262,7 +1367,7 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
             mitre = "T1498.001 - Direct Network Flood DDoS";
             reason = "High request velocity (" + req + " req/min) indicates Layer 7 volumetric exhaustion.";
             threatLevel = "CRITICAL";
-        } else if (failed >= 12) {
+        } else if (failed >= 10) {
             vector = "SSH Brute Force Credential Spray";
             mitre = "T1110.001 - Password Spraying";
             reason = "Excessive failed authentications (" + failed + " attempts) detected from suspect endpoint.";
@@ -1284,7 +1389,7 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
 
     // --- FORM THREAT AUDIT SUBMISSION ---
     function runThreatAnalysis(e) {
-        e.preventDefault();
+        if (e && e.preventDefault) e.preventDefault();
         const ip = document.getElementById('inputIp').value.trim();
         const failed = parseInt(document.getElementById('inputFailed').value) || 0;
         const req = parseInt(document.getElementById('inputRequests').value) || 0;
@@ -1292,6 +1397,7 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
         const net = parseInt(document.getElementById('inputActivity').value) || 0;
 
         const res = evaluateThreatAI(failed, req, hour, net);
+        const intel = getIpIntel(ip);
 
         // Update UI results
         const riskEl = document.getElementById('resultRiskScore');
@@ -1306,7 +1412,7 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
         document.getElementById('resultVector').innerText = res.vector;
         document.getElementById('resultReason').innerText = res.reason;
         document.getElementById('resultMitre').innerText = res.mitre;
-        document.getElementById('resultGeo').innerText = "🇷🇺 Moscow, Russia (AS12389 Rostelecom)";
+        document.getElementById('resultGeo').innerText = `${intel.flag} ${intel.city}, ${intel.country} (${intel.isp})`;
 
         // Update pre-generated firewall rule
         document.getElementById('firewallCliRules').innerText = 
@@ -1351,19 +1457,19 @@ access-list 101 deny ip host ${ip} any`;
             document.getElementById('soarStep1').className = "soar-step-item step-complete";
             if (!blockedIps.includes(ip)) blockedIps.push(ip);
             renderFirewallTable();
-        }, 600);
+        }, 500);
 
         setTimeout(() => {
             document.getElementById('soarBadge2').innerText = "REVOKED";
             document.getElementById('soarBadge2').className = "badge low";
             document.getElementById('soarStep2').className = "soar-step-item step-complete";
-        }, 1200);
+        }, 1000);
 
         setTimeout(() => {
             document.getElementById('soarBadge3').innerText = "ENFORCED";
             document.getElementById('soarBadge3').className = "badge low";
             document.getElementById('soarStep3').className = "soar-step-item step-complete";
-        }, 1800);
+        }, 1500);
 
         setTimeout(() => {
             document.getElementById('soarBadge4').innerText = "DISPATCHED";
@@ -1371,8 +1477,14 @@ access-list 101 deny ip host ${ip} any`;
             document.getElementById('soarStep4').className = "soar-step-item step-complete";
             btn.disabled = false;
             btn.innerText = "⚡ Execute Automated Containment Playbook";
-            alert(`[SOAR WORKFLOW COMPLETE]\nHost ${ip} has been successfully quarantined across all defense perimeters.`);
-        }, 2400);
+            
+            // Notification toast in page
+            const alertBox = document.createElement('div');
+            alertBox.style.cssText = "position: fixed; bottom: 25px; right: 25px; background: #064e3b; border: 1px solid #10b981; color: #a7f3d0; padding: 16px 22px; border-radius: 8px; font-weight: bold; z-index: 10000; box-shadow: 0 10px 25px rgba(0,0,0,0.6);";
+            alertBox.innerHTML = `🛡️ [SOAR WORKFLOW COMPLETE]<br><span style="font-size:12px; font-weight:normal;">Host <code>${ip}</code> has been quarantined across all firewalls.</span>`;
+            document.body.appendChild(alertBox);
+            setTimeout(() => alertBox.remove(), 4000);
+        }, 2000);
     }
 
     function quarantineCurrentResultIp() {
@@ -1381,9 +1493,9 @@ access-list 101 deny ip host ${ip} any`;
             blockedIps.push(ip);
             renderFirewallTable();
             document.getElementById('kpiBlockedCount').innerText = blockedIps.length + " HOSTS";
-            alert(`Host ${ip} has been added to Active Firewall Quarantine.`);
+            showToast(`Host ${ip} has been added to Active Firewall Quarantine.`);
         } else {
-            alert(`Host ${ip} is already in the Quarantine Blocklist.`);
+            showToast(`Host ${ip} is already in Quarantine Blocklist.`);
         }
     }
 
@@ -1394,7 +1506,7 @@ access-list 101 deny ip host ${ip} any`;
         runSoarExecution();
     }
 
-    // --- CYBER ATTACK SIMULATOR ---
+    // --- CYBER ATTACK SIMULATOR (WITH LIVE PIPELINE INJECTION) ---
     function runSimulation(type) {
         const output = document.getElementById('simConsoleOutput');
         const status = document.getElementById('simStatusText');
@@ -1402,7 +1514,20 @@ access-list 101 deny ip host ${ip} any`;
         status.style.color = "#f59e0b";
 
         let lines = [];
+        let simIp = "192.168.1.52";
+        let simVector = "SSH_BRUTE_FORCE";
+        let simVerdict = "CRITICAL";
+        let simFailed = 18;
+        let simReq = 380;
+        let simNet = 840;
+
         if (type === 'ssh') {
+            simIp = "192.168.1.52";
+            simVector = "SSH_BRUTE_FORCE";
+            simVerdict = "CRITICAL";
+            simFailed = 18;
+            simReq = 380;
+            simNet = 840;
             lines = [
                 "[INGRESS] Inbound TCP SYN flood detected on port 22 (SSH)...",
                 "[AUTH] 18 consecutive failed password attempts for user 'root'...",
@@ -1411,6 +1536,12 @@ access-list 101 deny ip host ${ip} any`;
                 "[SOAR AUTO-RESPONSE] iptables drop rule injected for 192.168.1.52. Host Quarantined!"
             ];
         } else if (type === 'ddos') {
+            simIp = "45.154.255.88";
+            simVector = "DDOS_FLOOD";
+            simVerdict = "CRITICAL";
+            simFailed = 2;
+            simReq = 1520;
+            simNet = 2900;
             lines = [
                 "[TRAFFIC SPIKE] 1,520 HTTP GET requests/sec targeting /api/v1/telemetry...",
                 "[SIEM ALARM] Ingress volume threshold breached (>500 req/min)...",
@@ -1418,17 +1549,35 @@ access-list 101 deny ip host ${ip} any`;
                 "[CONTAINMENT] Cloudflare Rate Limiter activated. 45.154.255.88 throttled."
             ];
         } else if (type === 'exfil') {
+            simIp = "185.220.101.5";
+            simVector = "DATA_EXFILTRATION";
+            simVerdict = "HIGH";
+            simFailed = 6;
+            simReq = 110;
+            simNet = 1950;
             lines = [
                 "[OFF-HOURS] Outbound SSL session established at 03:14 AM UTC...",
                 "[OSINT] Destination ASN resolved to known Tor Exit Node in Netherlands...",
                 "[DATA LOSS PREVENTION] 18.5 MB payload transfer intercepted and blocked..."
             ];
         } else if (type === 'recon') {
+            simIp = "103.203.57.18";
+            simVector = "PORT_RECON_SCAN";
+            simVerdict = "MEDIUM";
+            simFailed = 4;
+            simReq = 480;
+            simNet = 340;
             lines = [
                 "[RECON] SYN probe sweep across ports 22, 80, 443, 3389, 3306...",
                 "[DEFENSE] Dynamic honeypot engaged. Attacker fingerprint logged to SIEM."
             ];
         } else {
+            simIp = "192.168.1.100";
+            simVector = "NORMAL";
+            simVerdict = "NORMAL";
+            simFailed = 0;
+            simReq = 45;
+            simNet = 120;
             lines = [
                 "[BASELINE] Safe authorized ingress from internal workstation...",
                 "[AI STATUS] Isolation Forest confirms normal operational baseline. Risk Score: 0/100."
@@ -1453,6 +1602,36 @@ access-list 101 deny ip host ${ip} any`;
                 if (idx === lines.length - 1) {
                     status.innerText = "● SIMULATION COMPLETED";
                     status.style.color = "#10b981";
+
+                    // Inject into Live SIEM pipeline!
+                    const now = new Date();
+                    const timeStr = now.toISOString().replace('T', ' ').substring(0, 19);
+                    threatLogs.unshift({
+                        time: timeStr,
+                        ip: simIp,
+                        failed: simFailed,
+                        req: simReq,
+                        hour: 1,
+                        net: simNet,
+                        verdict: simVerdict,
+                        vector: simVector
+                    });
+                    renderLogsTable();
+
+                    // If high risk, auto-quarantine in firewall
+                    if ((simVerdict === "CRITICAL" || simVerdict === "HIGH") && !blockedIps.includes(simIp)) {
+                        blockedIps.push(simIp);
+                        renderFirewallTable();
+                    }
+
+                    // Update KPI counters
+                    const kpiEvents = document.getElementById('kpiTotalEvents');
+                    if (kpiEvents) {
+                        const count = parseInt(kpiEvents.innerText.replace(/[^0-9]/g, '')) || 1842;
+                        kpiEvents.innerText = (count + 1).toLocaleString() + " EVENTS";
+                    }
+
+                    showToast(`⚡ Simulation Event injected into SIEM Telemetry: ${simIp} (${simVector})`);
                 }
             }, (idx + 1) * 350);
         });
@@ -1460,22 +1639,58 @@ access-list 101 deny ip host ${ip} any`;
 
     // --- OSINT RECON SCANNER ---
     function runReconScan() {
-        const ip = document.getElementById('reconInputIp').value.trim();
-        alert(`OSINT Surface scan initiated for host ${ip}. Port vulnerability matrix refreshed!`);
+        const ip = (document.getElementById('reconInputIp').value || "192.168.1.52").trim();
+        const intel = getIpIntel(ip);
+
+        // Visual scan feedback
+        document.getElementById('reconGeo').innerText = "Probing Geo-IP...";
+        document.getElementById('reconAsn').innerText = "Resolving ASN...";
+        document.getElementById('reconTor').innerText = "Checking Tor relays...";
+        document.getElementById('reconCvss').innerText = "Calculating CVSS...";
+
+        setTimeout(() => {
+            document.getElementById('reconGeo').innerText = `${intel.flag} ${intel.city}, ${intel.country}`;
+            document.getElementById('reconAsn').innerText = intel.isp;
+            const torEl = document.getElementById('reconTor');
+            torEl.innerText = intel.is_tor ? "FLAGGED (Tor Exit Node)" : "CLEAN (Direct Endpoint)";
+            torEl.style.color = intel.is_tor ? "#ef4444" : "#10b981";
+            document.getElementById('reconCvss').innerText = `CVSS ${intel.cvss}`;
+
+            // Render Ports Table
+            const tbody = document.getElementById('reconPortTable');
+            if (tbody) {
+                tbody.innerHTML = "";
+                intel.ports.forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = "1px solid #111e38";
+                    tr.innerHTML = `
+                        <td style="padding: 10px; font-family: monospace; color: #38bdf8;">${p.port}</td>
+                        <td style="padding: 10px;">${p.service}</td>
+                        <td style="padding: 10px;"><span class="badge ${p.badge}">${p.status}</span></td>
+                        <td style="padding: 10px; color: ${p.badge === 'high' ? '#ef4444' : (p.badge === 'med' ? '#f59e0b' : '#10b981')};">${p.cve}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            showToast(`🌐 OSINT Recon Scan completed for host: ${ip}`);
+        }, 600);
     }
 
     // --- FIREWALL & LOG TABLES ---
     function renderFirewallTable() {
         const tbody = document.getElementById('firewallTableBody');
+        if (!tbody) return;
         tbody.innerHTML = "";
         blockedIps.forEach(ip => {
+            const intel = getIpIntel(ip);
             const tr = document.createElement('tr');
             tr.style.borderBottom = "1px solid #111e38";
             tr.innerHTML = `
-                <td style="padding: 10px; font-family: monospace; color: #ef4444;">${ip}</td>
-                <td style="padding: 10px;">🇷🇺 Russia</td>
-                <td style="padding: 10px;">Brute Force / Volumetric DDoS</td>
-                <td style="padding: 10px; color: #64748b;">2026-08-29 20:30 UTC</td>
+                <td style="padding: 10px; font-family: monospace; color: #ef4444; font-weight: bold;">${ip}</td>
+                <td style="padding: 10px;">${intel.flag} ${intel.country}</td>
+                <td style="padding: 10px;">${intel.vector}</td>
+                <td style="padding: 10px; color: #64748b;">ACTIVE QUARANTINE</td>
                 <td style="padding: 10px; display: flex; gap: 8px;">
                     <button onclick="generateSingleHostReport('${ip}')" class="btn-sm" style="background: #0284c7; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
                         📄 Report
@@ -1487,7 +1702,8 @@ access-list 101 deny ip host ${ip} any`;
             `;
             tbody.appendChild(tr);
         });
-        document.getElementById('kpiBlockedCount').innerText = blockedIps.length + " HOSTS";
+        const kpi = document.getElementById('kpiBlockedCount');
+        if (kpi) kpi.innerText = blockedIps.length + " HOSTS";
     }
 
     function addManualQuarantine() {
@@ -1496,17 +1712,19 @@ access-list 101 deny ip host ${ip} any`;
             blockedIps.push(ip);
             renderFirewallTable();
             document.getElementById('manualBlockIp').value = "";
-            alert(`Host ${ip} has been added to Quarantine!`);
+            showToast(`Host ${ip} has been added to Quarantine!`);
         }
     }
 
     function unblockIp(ip) {
         blockedIps = blockedIps.filter(item => item !== ip);
         renderFirewallTable();
+        showToast(`Quarantine lifted for host: ${ip}`);
     }
 
     function renderLogsTable() {
         const tbody = document.getElementById('securityLogsTableBody');
+        if (!tbody) return;
         tbody.innerHTML = "";
         threatLogs.forEach(log => {
             const tr = document.createElement('tr');
@@ -1527,6 +1745,7 @@ access-list 101 deny ip host ${ip} any`;
     function filterLogsTable() {
         const filter = document.getElementById('logFilterLevel').value;
         const tbody = document.getElementById('securityLogsTableBody');
+        if (!tbody) return;
         tbody.innerHTML = "";
         threatLogs.filter(log => filter === "ALL" || log.verdict === filter).forEach(log => {
             const tr = document.createElement('tr');
@@ -1545,35 +1764,37 @@ access-list 101 deny ip host ${ip} any`;
     }
 
     function downloadLogsCsv() {
-        let csv = "timestamp,source_ip,failed_attempts,request_count,network_activity,verdict\n";
+        let csv = "timestamp,source_ip,failed_attempts,request_count,network_activity,verdict,vector
+";
         threatLogs.forEach(l => {
-            csv += `${l.time},${l.ip},${l.failed},${l.req},${l.net},${l.verdict}\n`;
+            csv += `"${l.time}","${l.ip}",${l.failed},${l.req},${l.net},"${l.verdict}","${l.vector}"
+`;
         });
         const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = "sentinelx_telemetry_logs.csv";
+        a.download = "sentinelx_security_logs.csv";
         a.click();
     }
 
     function downloadJsonReport() {
         const payload = {
-            system: "SentinelX AI Threat Intelligence SIEM",
-            classification: "CONFIDENTIAL // LAW ENFORCEMENT SENSITIVE",
+            system: "SentinelX AI Threat SIEM",
             generated_at: new Date().toISOString(),
-            total_quarantined_hosts: blockedIps.length,
             quarantined_hosts: blockedIps,
-            telemetry_events: threatLogs
+            event_count: threatLogs.length,
+            events: threatLogs
         };
         const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = "sentinelx_siem_executive_report.json";
+        a.download = "sentinelx_audit_report.json";
         a.click();
     }
 
     function toggleIncidentStatus(elementId) {
         const el = document.getElementById(elementId);
+        if (!el) return;
         if (el.innerText === "CONTAINED") {
             el.innerText = "RESOLVED";
             el.className = "badge status-badge-resolved";
@@ -1588,15 +1809,23 @@ access-list 101 deny ip host ${ip} any`;
 
     function saveWebhookSettings() {
         const url = document.getElementById('webhookUrlInput').value.trim();
-        alert("SIEM Webhook configuration saved successfully for:\n" + url);
+        showToast("SIEM Webhook configuration saved successfully!");
     }
 
     function testWebhookAlert() {
-        alert("📡 Test Webhook packet dispatched to configured endpoint!");
+        showToast("📡 Test Webhook packet dispatched to configured endpoint!");
     }
 
     function triggerRadarPing() {
-        alert("📡 Radar broadcast ping dispatched across all listening SOC wallboard nodes!");
+        showToast("📡 Radar broadcast ping dispatched across all listening SOC wallboard nodes!");
+    }
+
+    function showToast(msg) {
+        const toast = document.createElement('div');
+        toast.style.cssText = "position: fixed; bottom: 25px; right: 25px; background: #0f172a; border: 1px solid #38bdf8; color: #f8fafc; padding: 14px 20px; border-radius: 8px; font-size: 13px; font-weight: bold; z-index: 10000; box-shadow: 0 10px 25px rgba(0,0,0,0.7); animation: fadeIn 0.3s ease;";
+        toast.innerText = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3500);
     }
 
     // ==========================================
@@ -1658,47 +1887,46 @@ access-list 101 deny ip host ${ip} any`;
             <!-- MITRE ATT&CK & THREAT SEVERITY OVERVIEW -->
             <div class="report-section-box">
                 <h3 style="font-size: 14px; color: #38bdf8; margin-bottom: 10px;">🎯 Mapped MITRE ATT&CK® Enterprise Techniques</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 12px;">
                     <div style="background: #040814; padding: 10px; border-radius: 6px; border-left: 3px solid #ef4444;">
-                        <strong>T1110.001 - Password Spraying (Brute Force)</strong>
-                        <p style="color: #94a3b8; font-size: 11px; margin: 4px 0 0 0;">Automated SSH dictionary attacks targeting gateway credentials.</p>
+                        <strong>T1110.001 - Password Spraying</strong>
+                        <p style="color: #94a3b8; font-size: 11px; margin-top: 4px;">18 attempts detected | Automated credential stuffing</p>
                     </div>
                     <div style="background: #040814; padding: 10px; border-radius: 6px; border-left: 3px solid #ef4444;">
-                        <strong>T1498.001 - Direct Network Flood DDoS</strong>
-                        <p style="color: #94a3b8; font-size: 11px; margin: 4px 0 0 0;">Volumetric HTTP packet floods exhausting gateway concurrency.</p>
+                        <strong>T1498.001 - Network Flood DDoS</strong>
+                        <p style="color: #94a3b8; font-size: 11px; margin-top: 4px;">1,520 req/min peak | Edge rate limiter engaged</p>
                     </div>
                     <div style="background: #040814; padding: 10px; border-radius: 6px; border-left: 3px solid #f59e0b;">
-                        <strong>T1048.003 - Exfiltration Over Tor Relay</strong>
-                        <p style="color: #94a3b8; font-size: 11px; margin: 4px 0 0 0;">Encrypted outbound byte transfer during non-business hours.</p>
-                    </div>
-                    <div style="background: #040814; padding: 10px; border-radius: 6px; border-left: 3px solid #38bdf8;">
-                        <strong>T1046 - Network Service Discovery (Recon)</strong>
-                        <p style="color: #94a3b8; font-size: 11px; margin: 4px 0 0 0;">Rapid TCP port sweeps across standard listening services.</p>
+                        <strong>T1048.003 - Exfiltration Over Tor</strong>
+                        <p style="color: #94a3b8; font-size: 11px; margin-top: 4px;">18.5 MB payload blocked | Onion routing intercepted</p>
                     </div>
                 </div>
             </div>
 
-            <!-- QUARANTINED HOSTS TABLE -->
+            <!-- ACTIVE INCIDENTS AUDIT TRAIL -->
             <div class="report-section-box">
-                <h3 style="font-size: 14px; color: #38bdf8; margin-bottom: 10px;">🛡️ Quarantined Threat Hosts Registry</h3>
-                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+                <h3 style="font-size: 14px; color: #38bdf8; margin-bottom: 10px;">🛡️ Quarantined Hosts & Containment Rules</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
                     <thead>
-                        <tr style="color: #64748b; border-bottom: 1px solid #1a2744;">
-                            <th style="padding: 6px;">IP ADDRESS</th>
-                            <th style="padding: 6px;">LOCATION</th>
-                            <th style="padding: 6px;">PRIMARY VECTOR</th>
-                            <th style="padding: 6px;">CONTAINMENT</th>
+                        <tr style="border-bottom: 1px solid #1a2744; color: #64748b;">
+                            <th style="padding: 6px;">QUARANTINED IP</th>
+                            <th style="padding: 6px;">ORIGIN NATION</th>
+                            <th style="padding: 6px;">THREAT VECTOR</th>
+                            <th style="padding: 6px;">STATUS</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${blockedIps.map(ip => `
-                            <tr style="border-bottom: 1px solid #0e1a38;">
-                                <td style="padding: 6px; font-family: monospace; color: #ef4444;">${ip}</td>
-                                <td style="padding: 6px;">🇷🇺 Moscow, Russia</td>
-                                <td style="padding: 6px;">SSH Brute Force / Volumetric Flood</td>
-                                <td style="padding: 6px;"><span class="badge low" style="font-size: 9px;">ACTIVE DROP RULE</span></td>
-                            </tr>
-                        `).join('')}
+                        ${blockedIps.map(ip => {
+                            const intel = getIpIntel(ip);
+                            return `
+                                <tr style="border-bottom: 1px solid #0d1527;">
+                                    <td style="padding: 6px; font-family: monospace; color: #ef4444;">${ip}</td>
+                                    <td style="padding: 6px;">${intel.flag} ${intel.country}</td>
+                                    <td style="padding: 6px;">${intel.vector}</td>
+                                    <td style="padding: 6px; color: #10b981;">ENFORCED</td>
+                                </tr>
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>
             </div>
@@ -1735,11 +1963,12 @@ access-list 101 deny ip host ${ip} any`;
     // 2. SINGLE HOST FORENSIC AUDIT DOSSIER
     function generateSingleHostReport(targetIp) {
         const ip = targetIp || "192.168.1.52";
+        const intel = getIpIntel(ip);
         const reportId = "DOSSIER-" + ip.replace(/\./g, '') + "-2026";
         const timestamp = new Date().toUTCString();
 
-        // Evaluate threat heuristics for this IP
-        const res = evaluateThreatAI(18, 380, 1, 840);
+        // Evaluate threat heuristics for this specific host
+        const res = evaluateThreatAI(intel.failed, intel.req, intel.hour, intel.net);
 
         const html = `
             <div class="report-modal-header">
@@ -1753,7 +1982,7 @@ access-list 101 deny ip host ${ip} any`;
                 <div style="text-align: right; font-size: 12px; color: #94a3b8;">
                     <div style="font-weight: bold; color: #f59e0b; font-family: monospace;">REF: ${reportId}</div>
                     <div style="margin-top: 4px;">Analyzed: ${timestamp}</div>
-                    <div style="margin-top: 4px; color: #ef4444; font-weight: bold;">SEVERITY: CRITICAL (LEVEL 5)</div>
+                    <div style="margin-top: 4px; color: ${res.risk > 70 ? '#ef4444' : (res.risk > 40 ? '#f59e0b' : '#10b981')}; font-weight: bold;">SEVERITY: ${res.threatLevel}</div>
                 </div>
             </div>
 
@@ -1761,12 +1990,12 @@ access-list 101 deny ip host ${ip} any`;
             <div class="report-section-box" style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <span style="font-size: 11px; color: #64748b; font-weight: bold;">HEURISTIC THREAT SCORE</span>
-                    <div style="font-size: 36px; font-weight: 900; color: #ef4444;">95/100</div>
-                    <div style="font-size: 12px; color: #10b981;">Isolation Forest: ANOMALY CONFIRMED (100% Match)</div>
+                    <div style="font-size: 36px; font-weight: 900; color: ${res.risk > 70 ? '#ef4444' : (res.risk > 40 ? '#f59e0b' : '#10b981')};">${res.risk}/100</div>
+                    <div style="font-size: 12px; color: #10b981;">Isolation Forest: ${res.anomalyScore ? 'ANOMALY CONFIRMED (100% Match)' : 'NORMAL OPERATIONAL BASELINE'}</div>
                 </div>
                 <div style="text-align: right;">
-                    <span class="badge high" style="font-size: 13px; padding: 6px 14px;">CRITICAL RISK</span>
-                    <div style="font-size: 12px; color: #94a3b8; margin-top: 6px;">Vector: SSH Brute Force Credential Spray</div>
+                    <span class="badge ${res.risk > 70 ? 'high' : (res.risk > 40 ? 'med' : 'low')}" style="font-size: 13px; padding: 6px 14px;">${res.threatLevel} RISK</span>
+                    <div style="font-size: 12px; color: #94a3b8; margin-top: 6px;">Vector: ${intel.vector}</div>
                 </div>
             </div>
 
@@ -1774,10 +2003,10 @@ access-list 101 deny ip host ${ip} any`;
             <div class="report-section-box">
                 <h3 style="font-size: 14px; color: #38bdf8; margin-bottom: 10px;">📊 Telemetry Ingress Evidence</h3>
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #040814; padding: 12px; border-radius: 6px; text-align: center; font-size: 12px;">
-                    <div><span style="font-size: 10px; color: #64748b;">FAILED LOGINS</span><strong style="display:block; color:#ef4444; font-size: 14px; margin-top:2px;">18 Attempts</strong></div>
-                    <div><span style="font-size: 10px; color: #64748b;">REQUEST RATE</span><strong style="display:block; color:#f8fafc; font-size: 14px; margin-top:2px;">380 req/min</strong></div>
-                    <div><span style="font-size: 10px; color: #64748b;">TIME OF ATTACK</span><strong style="display:block; color:#f59e0b; font-size: 14px; margin-top:2px;">03:14 AM (Off-Peak)</strong></div>
-                    <div><span style="font-size: 10px; color: #64748b;">BANDWIDTH</span><strong style="display:block; color:#38bdf8; font-size: 14px; margin-top:2px;">840 KB/s</strong></div>
+                    <div><span style="font-size: 10px; color: #64748b;">FAILED LOGINS</span><strong style="display:block; color:#ef4444; font-size: 14px; margin-top:2px;">${intel.failed} Attempts</strong></div>
+                    <div><span style="font-size: 10px; color: #64748b;">REQUEST RATE</span><strong style="display:block; color:#f8fafc; font-size: 14px; margin-top:2px;">${intel.req} req/min</strong></div>
+                    <div><span style="font-size: 10px; color: #64748b;">TIME OF ATTACK</span><strong style="display:block; color:#f59e0b; font-size: 14px; margin-top:2px;">${intel.hour ? 'Off-Hours (Night)' : 'Standard Business'}</strong></div>
+                    <div><span style="font-size: 10px; color: #64748b;">BANDWIDTH</span><strong style="display:block; color:#38bdf8; font-size: 14px; margin-top:2px;">${intel.net} KB/s</strong></div>
                 </div>
             </div>
 
@@ -1786,17 +2015,17 @@ access-list 101 deny ip host ${ip} any`;
                 <div class="report-section-box" style="margin-bottom: 0;">
                     <h3 style="font-size: 13px; color: #38bdf8; margin-bottom: 8px;">🌐 OSINT Geolocation & Network</h3>
                     <div style="font-size: 12px; display: flex; flex-direction: column; gap: 6px;">
-                        <div><strong>Location:</strong> 🇷🇺 Moscow, Russia</div>
-                        <div><strong>Autonomous System:</strong> AS12389 Rostelecom</div>
-                        <div><strong>Tor Exit Node:</strong> <span style="color:#ef4444;">Flagged Positive</span></div>
+                        <div><strong>Location:</strong> ${intel.flag} ${intel.city}, ${intel.country}</div>
+                        <div><strong>Autonomous System:</strong> ${intel.isp}</div>
+                        <div><strong>Tor Exit Node:</strong> <span style="color:${intel.is_tor ? '#ef4444' : '#10b981'};">${intel.is_tor ? 'Flagged Positive' : 'Clean'}</span></div>
                     </div>
                 </div>
                 <div class="report-section-box" style="margin-bottom: 0;">
                     <h3 style="font-size: 13px; color: #38bdf8; margin-bottom: 8px;">🎯 MITRE ATT&CK® Vector</h3>
                     <div style="font-size: 12px; display: flex; flex-direction: column; gap: 6px;">
-                        <div><strong>Technique:</strong> T1110.001 (Password Spraying)</div>
-                        <div><strong>Tactic:</strong> Initial Access (TA0001)</div>
-                        <div><strong>Severity:</strong> <span style="color:#ef4444;">Critical Impact</span></div>
+                        <div><strong>Technique:</strong> ${intel.mitre}</div>
+                        <div><strong>Classification:</strong> ${intel.vector}</div>
+                        <div><strong>Reason:</strong> ${intel.reason}</div>
                     </div>
                 </div>
             </div>
@@ -1877,12 +2106,23 @@ netsh advfirewall firewall add rule name="SentinelX_Quarantine_${ip}" dir=in act
         });
     }
 
-    // --- WINDOW LOAD CONTROLLER ---
+    // --- WINDOW LOAD & ROUTING CONTROLLER ---
     window.addEventListener('DOMContentLoaded', () => {
         initMaps();
         initCharts();
         renderFirewallTable();
         renderLogsTable();
+
+        // Check URL hash for direct tab linking (e.g. #threat-map, #simulate)
+        const hash = window.location.hash.replace('#', '');
+        if (hash) {
+            switchTab(hash);
+        }
+
+        window.addEventListener('hashchange', () => {
+            const h = window.location.hash.replace('#', '');
+            if (h) switchTab(h);
+        });
 
         // Wallboard Log Feed Stream
         const wallLog = document.getElementById('wallboardLogStream');
