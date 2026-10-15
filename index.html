@@ -1764,11 +1764,9 @@ access-list 101 deny ip host ${ip} any`;
     }
 
     function downloadLogsCsv() {
-        let csv = "timestamp,source_ip,failed_attempts,request_count,network_activity,verdict,vector
-";
+        let csv = "timestamp,source_ip,failed_attempts,request_count,network_activity,verdict,vector\n";
         threatLogs.forEach(l => {
-            csv += `"${l.time}","${l.ip}",${l.failed},${l.req},${l.net},"${l.verdict}","${l.vector}"
-`;
+            csv += `"${l.time}","${l.ip}",${l.failed},${l.req},${l.net},"${l.verdict}","${l.vector}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement('a');
