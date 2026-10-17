@@ -462,20 +462,54 @@
     <!-- ========================================== -->
     <!-- TAB 2: LIVE THREAT MAP (FULLSCREEN WALLBOARD) -->
     <!-- ========================================== -->
+    <!-- ========================================== -->
+    <!-- TAB 2: LIVE THREAT MAP (FULLSCREEN WALLBOARD) -->
+    <!-- ========================================== -->
     <div id="threat-map-tab" class="tab-content">
         <section class="panel">
-            <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
-                    <h2>🌍 Fullscreen Global Attack Threat Wallboard</h2>
-                    <p>Real-time quadratic Bézier vector arcs, missile sparks, telemetry feed & origin nation ranking</p>
+                    <h2>🌍 Fullscreen Global Cyber Attack Threat Wallboard</h2>
+                    <p>Real-time 60 FPS quadratic Bézier vectors, telemetry feed, origin nation ranking &amp; intercept telemetry</p>
                 </div>
-                <button onclick="triggerRadarPing()" class="btn-sm" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
-                    📡 Broadcast Radar Ping
-                </button>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button onclick="triggerRadarPing()" class="btn-sm" style="background: #0284c7; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                        📡 Broadcast Radar Ping
+                    </button>
+                    <button id="btnToggleMapStream" onclick="toggleMapStream()" class="btn-sm" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                        ⏸️ Pause Stream
+                    </button>
+                    <button onclick="triggerThreatSurge()" class="btn-sm" style="background: #dc2626; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                        ⚡ Trigger Threat Surge
+                    </button>
+                    <button onclick="focusSocDatacenter()" class="btn-sm" style="background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 8px 14px; border-radius: 6px; cursor: pointer;">
+                        🎯 Focus Datacenter
+                    </button>
+                </div>
+            </div>
+
+            <!-- LIVE STATS HUD STRIP -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px;">
+                <div style="background: #070d1a; border: 1px solid #1a2744; border-radius: 8px; padding: 12px 16px;">
+                    <span style="font-size: 11px; color: #64748b; font-weight: bold;">TOTAL INTERCEPTED ATTACKS</span>
+                    <div style="font-size: 22px; font-weight: 900; color: #ef4444; margin-top: 4px;" id="mapCounterDetected">1,842</div>
+                </div>
+                <div style="background: #070d1a; border: 1px solid #1a2744; border-radius: 8px; padding: 12px 16px;">
+                    <span style="font-size: 11px; color: #64748b; font-weight: bold;">ACTIVE QUARANTINED HOSTS</span>
+                    <div style="font-size: 22px; font-weight: 900; color: #38bdf8; margin-top: 4px;" id="mapCounterQuarantined">4 HOSTS</div>
+                </div>
+                <div style="background: #070d1a; border: 1px solid #1a2744; border-radius: 8px; padding: 12px 16px;">
+                    <span style="font-size: 11px; color: #64748b; font-weight: bold;">INGRESS TRAFFIC VELOCITY</span>
+                    <div style="font-size: 22px; font-weight: 900; color: #f59e0b; margin-top: 4px;" id="mapCounterVelocity">42.8 kpps</div>
+                </div>
+                <div style="background: #070d1a; border: 1px solid #1a2744; border-radius: 8px; padding: 12px 16px;">
+                    <span style="font-size: 11px; color: #64748b; font-weight: bold;">SOC DEFENSE WALL STATUS</span>
+                    <div style="font-size: 22px; font-weight: 900; color: #10b981; margin-top: 4px;" id="mapCounterStatus">● SHIELD 100%</div>
+                </div>
             </div>
             
             <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 20px;">
-                <div style="position: relative; height: 550px; border-radius: 10px; overflow: hidden; border: 1px solid #1a2744;">
+                <div style="position: relative; height: 560px; border-radius: 10px; overflow: hidden; border: 1px solid #1a2744;">
                     <div id="wallboardMap" style="height: 100%; width: 100%;"></div>
                     <canvas id="wallboardCanvas" class="canvas-overlay"></canvas>
                 </div>
@@ -484,19 +518,23 @@
                 <div style="display: flex; flex-direction: column; gap: 15px;">
                     <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
                         <h3 style="font-size: 14px; color: #38bdf8; margin-bottom: 10px;">🏆 Top Threat Origins</h3>
-                        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
-                            <div style="display: flex; justify-content: space-between;"><span>🇷🇺 Russia</span><strong class="high">482 attacks</strong></div>
-                            <div style="display: flex; justify-content: space-between;"><span>🇨🇳 China</span><strong class="high">394 attacks</strong></div>
-                            <div style="display: flex; justify-content: space-between;"><span>🇳🇱 Netherlands (Tor)</span><strong class="med">215 attacks</strong></div>
-                            <div style="display: flex; justify-content: space-between;"><span>🇧🇷 Brazil</span><strong class="med">180 attacks</strong></div>
-                            <div style="display: flex; justify-content: space-between;"><span>🇩🇪 Germany</span><strong class="low">112 attacks</strong></div>
+                        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;" id="topOriginsList">
+                            <div style="display: flex; justify-content: space-between;"><span>🇷🇺 Russia</span><strong class="high" id="origCountRu">542 attacks</strong></div>
+                            <div style="display: flex; justify-content: space-between;"><span>🇨🇳 China</span><strong class="high" id="origCountCn">418 attacks</strong></div>
+                            <div style="display: flex; justify-content: space-between;"><span>🇳🇱 Netherlands (Tor)</span><strong class="med" id="origCountNl">265 attacks</strong></div>
+                            <div style="display: flex; justify-content: space-between;"><span>🇧🇷 Brazil</span><strong class="med" id="origCountBr">198 attacks</strong></div>
+                            <div style="display: flex; justify-content: space-between;"><span>🇩🇪 Germany</span><strong class="low" id="origCountDe">124 attacks</strong></div>
+                            <div style="display: flex; justify-content: space-between;"><span>🇮🇷 Iran</span><strong class="high" id="origCountIr">96 attacks</strong></div>
                         </div>
                     </div>
 
                     <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px; flex: 1; display: flex; flex-direction: column;">
-                        <h3 style="font-size: 14px; color: #38bdf8; margin-bottom: 10px;">⚡ Live Intercept Log</h3>
-                        <div id="wallboardLogStream" style="flex: 1; overflow-y: auto; font-family: monospace; font-size: 11px; display: flex; flex-direction: column; gap: 6px; max-height: 280px;">
-                            <!-- Dynamically generated logs -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 style="font-size: 14px; color: #38bdf8;">⚡ Live Intercept Log</h3>
+                            <button onclick="clearWallboardLogs()" style="background: none; border: none; color: #64748b; font-size: 11px; cursor: pointer; text-decoration: underline;">Clear</button>
+                        </div>
+                        <div id="wallboardLogStream" style="flex: 1; overflow-y: auto; font-family: monospace; font-size: 11px; display: flex; flex-direction: column; gap: 6px; max-height: 290px;">
+                            <!-- Dynamically generated logs with action buttons -->
                         </div>
                     </div>
                 </div>
@@ -547,13 +585,32 @@
                         </div>
                     </div>
 
-                    <div style="display: flex; gap: 12px;">
+                    <div style="display: flex; gap: 12px; margin-bottom: 15px;">
                         <button type="submit" class="btn" style="flex: 1; background: #0284c7; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">
                             ⚡ Run AI Threat Audit
                         </button>
-                        <button type="button" onclick="loadSamplePreset('bruteforce')" class="btn" style="background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 12px; border-radius: 6px; cursor: pointer;">
-                            Load Preset
-                        </button>
+                    </div>
+
+                    <!-- QUICK ATTACK PRESETS -->
+                    <div style="border-top: 1px solid #1a2744; padding-top: 12px;">
+                        <span style="font-size: 11px; color: #64748b; font-weight: bold; display: block; margin-bottom: 8px;">1-CLICK ATTACK SIMULATION PRESETS</span>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button type="button" onclick="loadSamplePreset('bruteforce')" class="btn-sm" style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #ef4444; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">
+                                🔴 SSH Spray
+                            </button>
+                            <button type="button" onclick="loadSamplePreset('ddos')" class="btn-sm" style="background: rgba(236, 72, 153, 0.15); border: 1px solid #ec4899; color: #ec4899; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">
+                                🟣 L7 DDoS Flood
+                            </button>
+                            <button type="button" onclick="loadSamplePreset('exfiltration')" class="btn-sm" style="background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #f59e0b; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">
+                                🟠 Exfiltration
+                            </button>
+                            <button type="button" onclick="loadSamplePreset('recon')" class="btn-sm" style="background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; color: #38bdf8; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">
+                                🔵 Port Recon
+                            </button>
+                            <button type="button" onclick="loadSamplePreset('normal')" class="btn-sm" style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #10b981; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;">
+                                🟢 Safe Normal
+                            </button>
+                        </div>
                     </div>
                 </form>
             </section>
@@ -561,8 +618,8 @@
             <!-- LIVE RESULTS PANEL -->
             <section class="panel" id="analysisResultPanel">
                 <div class="panel-title">
-                    <h2>🎯 AI Assessment & Telemetry Verdict</h2>
-                    <p>Multi-dimensional analysis verdict & mitigation recommendations</p>
+                    <h2>🎯 AI Assessment &amp; Telemetry Verdict</h2>
+                    <p>Multi-dimensional analysis verdict, XAI feature weights &amp; mitigation recommendations</p>
                 </div>
 
                 <div style="display: flex; align-items: center; justify-content: space-between; background: #070d1a; border: 1px solid #1a2744; border-radius: 8px; padding: 18px 22px; margin-bottom: 20px;">
@@ -576,20 +633,66 @@
                     </div>
                 </div>
 
-                <div style="background: #0d1527; border: 1px solid #1a2744; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <div style="background: #0d1527; border: 1px solid #1a2744; border-radius: 8px; padding: 15px; margin-bottom: 16px;">
                     <div style="font-size: 12px; color: #38bdf8; font-weight: bold; margin-bottom: 6px;">CLASSIFIED ATTACK VECTOR</div>
                     <div style="font-size: 18px; font-weight: 700; color: #f8fafc;" id="resultVector">SSH Brute Force Credential Spray</div>
                     <p style="font-size: 12px; color: #94a3b8; margin-top: 6px;" id="resultReason">Multiple failed login authentication sequences detected during off-peak hours.</p>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 16px;">
                     <div style="background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; padding: 12px;">
-                        <div style="font-size: 11px; color: #64748b;">MITRE ATT&CK TECHNIQUE</div>
+                        <div style="font-size: 11px; color: #64748b;">MITRE ATT&amp;CK TECHNIQUE</div>
                         <div style="font-size: 14px; font-weight: bold; color: #f59e0b; margin-top: 4px;" id="resultMitre">T1110.001 - Password Spraying</div>
                     </div>
                     <div style="background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; padding: 12px;">
-                        <div style="font-size: 11px; color: #64748b;">OSINT GEOLOCATION & ISP</div>
+                        <div style="font-size: 11px; color: #64748b;">OSINT GEOLOCATION &amp; ISP</div>
                         <div style="font-size: 14px; font-weight: bold; color: #38bdf8; margin-top: 4px;" id="resultGeo">🇷🇺 Moscow, Russia (AS12389)</div>
+                    </div>
+                </div>
+
+                <!-- XAI FEATURE IMPORTANCE CONTRIBUTION BREAKDOWN -->
+                <div style="background: #070d1a; border: 1px solid #1a2744; border-radius: 8px; padding: 14px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 11px; color: #38bdf8; font-weight: bold; letter-spacing: 0.5px;">EXPLAINABLE AI (XAI) DECISION BREAKDOWN</span>
+                        <span style="font-size: 10px; color: #64748b;">SHAP &amp; FEATURE WEIGHTS</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 11px;">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                <span style="color: #94a3b8;">Authentication Failure Surge</span>
+                                <strong id="xaiFailedPct" style="color: #ef4444;">+42%</strong>
+                            </div>
+                            <div style="width: 100%; height: 5px; background: #111e38; border-radius: 3px; overflow: hidden;">
+                                <div id="xaiFailedBar" style="width: 42%; height: 100%; background: #ef4444;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                <span style="color: #94a3b8;">Request Velocity (/min)</span>
+                                <strong id="xaiReqPct" style="color: #f59e0b;">+30%</strong>
+                            </div>
+                            <div style="width: 100%; height: 5px; background: #111e38; border-radius: 3px; overflow: hidden;">
+                                <div id="xaiReqBar" style="width: 30%; height: 100%; background: #f59e0b;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                <span style="color: #94a3b8;">Temporal Off-Hours Flag</span>
+                                <strong id="xaiHourPct" style="color: #38bdf8;">+15%</strong>
+                            </div>
+                            <div style="width: 100%; height: 5px; background: #111e38; border-radius: 3px; overflow: hidden;">
+                                <div id="xaiHourBar" style="width: 15%; height: 100%; background: #38bdf8;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                <span style="color: #94a3b8;">Bandwidth Payload Deviation</span>
+                                <strong id="xaiNetPct" style="color: #a855f7;">+13%</strong>
+                            </div>
+                            <div style="width: 100%; height: 5px; background: #111e38; border-radius: 3px; overflow: hidden;">
+                                <div id="xaiNetBar" style="width: 13%; height: 100%; background: #a855f7;"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -702,59 +805,146 @@
     <!-- ========================================== -->
     <div id="mitre-tab" class="tab-content">
         <section class="panel">
-            <div class="panel-title">
-                <h2>🎯 MITRE ATT&CK® Framework v14 Navigator</h2>
-                <p>Real-time enterprise tactics, mapped attack techniques, and automated SOC defensive controls</p>
+            <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h2>🎯 MITRE ATT&amp;CK® Enterprise Framework v14 Navigator</h2>
+                    <p>Real-time enterprise tactics, mapped adversary techniques, detection rules &amp; automated containment playbooks</p>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <span style="font-size: 11px; color: #94a3b8;">Click any technique card below to inspect telemetry &amp; mitigation:</span>
+                    <button onclick="openMitreTechniqueModal('T1110.001')" class="btn-sm" style="background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
+                        🔍 Active Technique Dossier
+                    </button>
+                </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-top: 20px;">
-                <!-- INITIAL ACCESS -->
-                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
-                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 10px;">INITIAL ACCESS (TA0001)</div>
-                    <div style="background: #070d1a; border: 1px solid #ef4444; border-radius: 6px; padding: 10px; margin-bottom: 10px;">
-                        <strong style="color: #ef4444; font-size: 13px;">T1110.001</strong>
-                        <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Password Spraying / SSH Brute Force</p>
-                        <span class="badge high" style="font-size: 9px; margin-top: 6px;">DETECTED</span>
+            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-top: 20px; overflow-x: auto;">
+                <!-- COL 1: INITIAL ACCESS -->
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; border-bottom: 1px solid #1a2744; padding-bottom: 6px;">INITIAL ACCESS</div>
+                    <div onclick="selectMitreTechnique('T1110.001')" style="background: #070d1a; border: 1px solid #ef4444; border-radius: 6px; padding: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                        <strong style="color: #ef4444; font-size: 12px; display: block;">T1110.001</strong>
+                        <div style="font-size: 11px; color: #f8fafc; font-weight: 600; margin: 2px 0;">Password Spraying</div>
+                        <span class="badge high" style="font-size: 9px;">DETECTED</span>
+                    </div>
+                    <div onclick="selectMitreTechnique('T1190')" style="background: #070d1a; border: 1px solid #f59e0b; border-radius: 6px; padding: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                        <strong style="color: #f59e0b; font-size: 12px; display: block;">T1190</strong>
+                        <div style="font-size: 11px; color: #f8fafc; font-weight: 600; margin: 2px 0;">Exploit Public App</div>
+                        <span class="badge med" style="font-size: 9px;">INVESTIGATING</span>
                     </div>
                 </div>
 
-                <!-- DISCOVERY -->
-                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
-                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 10px;">DISCOVERY (TA0007)</div>
-                    <div style="background: #070d1a; border: 1px solid #f59e0b; border-radius: 6px; padding: 10px; margin-bottom: 10px;">
-                        <strong style="color: #f59e0b; font-size: 13px;">T1046</strong>
-                        <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Network Service Scanning & Recon</p>
-                        <span class="badge med" style="font-size: 9px; margin-top: 6px;">DETECTED</span>
+                <!-- COL 2: EXECUTION -->
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; border-bottom: 1px solid #1a2744; padding-bottom: 6px;">EXECUTION</div>
+                    <div onclick="selectMitreTechnique('T1059.001')" style="background: #070d1a; border: 1px solid #ef4444; border-radius: 6px; padding: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                        <strong style="color: #ef4444; font-size: 12px; display: block;">T1059.001</strong>
+                        <div style="font-size: 11px; color: #f8fafc; font-weight: 600; margin: 2px 0;">PowerShell Cmds</div>
+                        <span class="badge high" style="font-size: 9px;">DETECTED</span>
+                    </div>
+                    <div onclick="selectMitreTechnique('T1204.002')" style="background: #070d1a; border: 1px solid #334155; border-radius: 6px; padding: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                        <strong style="color: #94a3b8; font-size: 12px; display: block;">T1204.002</strong>
+                        <div style="font-size: 11px; color: #f8fafc; font-weight: 600; margin: 2px 0;">Malicious File Run</div>
+                        <span class="badge low" style="font-size: 9px;">BASELINE</span>
                     </div>
                 </div>
 
-                <!-- IMPACT -->
-                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
-                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 10px;">IMPACT (TA0040)</div>
-                    <div style="background: #070d1a; border: 1px solid #ef4444; border-radius: 6px; padding: 10px; margin-bottom: 10px;">
-                        <strong style="color: #ef4444; font-size: 13px;">T1498.001</strong>
-                        <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Direct Network Flood DDoS</p>
-                        <span class="badge high" style="font-size: 9px; margin-top: 6px;">DETECTED</span>
+                <!-- COL 3: CREDENTIAL ACCESS -->
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; border-bottom: 1px solid #1a2744; padding-bottom: 6px;">CREDENTIAL ACCESS</div>
+                    <div onclick="selectMitreTechnique('T1003')" style="background: #070d1a; border: 1px solid #10b981; border-radius: 6px; padding: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                        <strong style="color: #10b981; font-size: 12px; display: block;">T1003</strong>
+                        <div style="font-size: 11px; color: #f8fafc; font-weight: 600; margin: 2px 0;">OS Cred Dumping</div>
+                        <span class="badge low" style="font-size: 9px;">CONTAINED</span>
+                    </div>
+                    <div onclick="selectMitreTechnique('T1078')" style="background: #070d1a; border: 1px solid #334155; border-radius: 6px; padding: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                        <strong style="color: #94a3b8; font-size: 12px; display: block;">T1078</strong>
+                        <div style="font-size: 11px; color: #f8fafc; font-weight: 600; margin: 2px 0;">Valid Accounts</div>
+                        <span class="badge low" style="font-size: 9px;">BASELINE</span>
                     </div>
                 </div>
 
-                <!-- EXFILTRATION -->
-                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
-                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 10px;">EXFILTRATION (TA0010)</div>
-                    <div style="background: #070d1a; border: 1px solid #ef4444; border-radius: 6px; padding: 10px; margin-bottom: 10px;">
-                        <strong style="color: #ef4444; font-size: 13px;">T1048.003</strong>
-                        <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Exfiltration Over Tor Relay</p>
-                        <span class="badge high" style="font-size: 9px; margin-top: 6px;">DETECTED</span>
+                <!-- COL 4: DISCOVERY & LATERAL -->
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; border-bottom: 1px solid #1a2744; padding-bottom: 6px;">DISCOVERY / LATERAL</div>
+                    <div onclick="selectMitreTechnique('T1046')" style="background: #070d1a; border: 1px solid #f59e0b; border-radius: 6px; padding: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                        <strong style="color: #f59e0b; font-size: 12px; display: block;">T1046</strong>
+                        <div style="font-size: 11px; color: #f8fafc; font-weight: 600; margin: 2px 0;">Network Scan</div>
+                        <span class="badge med" style="font-size: 9px;">DETECTED</span>
+                    </div>
+                    <div onclick="selectMitreTechnique('T1021.001')" style="background: #070d1a; border: 1px solid #f59e0b; border-radius: 6px; padding: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                        <strong style="color: #f59e0b; font-size: 12px; display: block;">T1021.001</strong>
+                        <div style="font-size: 11px; color: #f8fafc; font-weight: 600; margin: 2px 0;">RDP Movement</div>
+                        <span class="badge med" style="font-size: 9px;">INVESTIGATING</span>
                     </div>
                 </div>
 
-                <!-- DEFENSE EVASION -->
-                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
-                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; margin-bottom: 10px;">DEFENSE EVASION (TA0005)</div>
-                    <div style="background: #070d1a; border: 1px solid #10b981; border-radius: 6px; padding: 10px; margin-bottom: 10px;">
-                        <strong style="color: #10b981; font-size: 13px;">T1078</strong>
-                        <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Valid Accounts Baseline</p>
-                        <span class="badge low" style="font-size: 9px; margin-top: 6px;">NORMAL</span>
+                <!-- COL 5: DEFENSE EVASION -->
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; border-bottom: 1px solid #1a2744; padding-bottom: 6px;">DEFENSE EVASION</div>
+                    <div onclick="selectMitreTechnique('T1562.001')" style="background: #070d1a; border: 1px solid #ef4444; border-radius: 6px; padding: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                        <strong style="color: #ef4444; font-size: 12px; display: block;">T1562.001</strong>
+                        <div style="font-size: 11px; color: #f8fafc; font-weight: 600; margin: 2px 0;">Disable Antivirus</div>
+                        <span class="badge high" style="font-size: 9px;">DETECTED</span>
+                    </div>
+                    <div onclick="selectMitreTechnique('T1070')" style="background: #070d1a; border: 1px solid #10b981; border-radius: 6px; padding: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                        <strong style="color: #10b981; font-size: 12px; display: block;">T1070</strong>
+                        <div style="font-size: 11px; color: #f8fafc; font-weight: 600; margin: 2px 0;">Log Wiping</div>
+                        <span class="badge low" style="font-size: 9px;">CONTAINED</span>
+                    </div>
+                </div>
+
+                <!-- COL 6: EXFIL & IMPACT -->
+                <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; border-bottom: 1px solid #1a2744; padding-bottom: 6px;">EXFIL &amp; IMPACT</div>
+                    <div onclick="selectMitreTechnique('T1498.001')" style="background: #070d1a; border: 1px solid #ef4444; border-radius: 6px; padding: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                        <strong style="color: #ef4444; font-size: 12px; display: block;">T1498.001</strong>
+                        <div style="font-size: 11px; color: #f8fafc; font-weight: 600; margin: 2px 0;">Network Flood DDoS</div>
+                        <span class="badge high" style="font-size: 9px;">DETECTED</span>
+                    </div>
+                    <div onclick="selectMitreTechnique('T1048.003')" style="background: #070d1a; border: 1px solid #ef4444; border-radius: 6px; padding: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                        <strong style="color: #ef4444; font-size: 12px; display: block;">T1048.003</strong>
+                        <div style="font-size: 11px; color: #f8fafc; font-weight: 600; margin: 2px 0;">Exfil Over Tor</div>
+                        <span class="badge high" style="font-size: 9px;">DETECTED</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACTIVE TECHNIQUE INSPECTOR CARD -->
+            <div id="mitreInspectorPanel" style="margin-top: 25px; background: #070d1a; border: 1px solid #1a2744; border-radius: 10px; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a2744; padding-bottom: 12px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <span style="font-size: 11px; color: #38bdf8; font-weight: bold; letter-spacing: 1px;" id="inspTechTactic">CREDENTIAL ACCESS (TA0006)</span>
+                        <h3 style="font-size: 18px; color: #f8fafc; margin-top: 2px;" id="inspTechTitle">T1110.001 — Password Spraying / SSH Brute Force</h3>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <span class="badge high" id="inspTechBadge">CRITICAL // DETECTED</span>
+                        <button onclick="openMitreTechniqueModal(currentSelectedMitreId)" class="btn-sm" style="background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
+                            📄 Full Playbook Modal
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                    <div>
+                        <div style="font-size: 12px; color: #94a3b8; line-height: 1.6; margin-bottom: 15px;" id="inspTechDesc">
+                            Adversaries may use password spraying techniques to authenticate across numerous accounts using a small list of commonly used passwords to avoid account lockouts.
+                        </div>
+                        <div style="background: #030712; border: 1px solid #1a2744; border-radius: 6px; padding: 12px; margin-bottom: 15px;">
+                            <span style="font-size: 10px; color: #38bdf8; font-weight: bold; display: block; margin-bottom: 4px;">SIEM SIGMA DETECTION RULE</span>
+                            <code style="font-size: 11px; color: #10b981; font-family: monospace;" id="inspTechSigma">
+                                Detect EventID=4625 (Logon Failure) WHERE count(TargetUserName) > 5 AND src_ip = anomalous within 60s
+                            </code>
+                        </div>
+                    </div>
+                    <div style="background: #0c1424; border: 1px solid #1a2744; border-radius: 6px; padding: 15px; font-size: 12px;">
+                        <span style="font-size: 11px; color: #64748b; font-weight: bold; display: block; margin-bottom: 8px;">KNOWN ADVERSARY GROUPS</span>
+                        <div style="color: #cbd5e1; line-height: 1.5; margin-bottom: 12px;" id="inspTechActors">
+                            • APT28 (Fancy Bear)<br>• Lazarus Group<br>• APT29 (Cozy Bear)
+                        </div>
+                        <button onclick="simulateMitreTechnique(currentSelectedMitreId)" class="btn-sm" style="width: 100%; background: #dc2626; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 6px;">
+                            ⚡ Simulate Attack Technique
+                        </button>
                     </div>
                 </div>
             </div>
@@ -970,45 +1160,76 @@
     <!-- ========================================== -->
     <div id="firewall-tab" class="tab-content">
         <section class="panel">
-            <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
-                    <h2>🛡️ Active Firewall Quarantine & Rule Generator</h2>
-                    <p>Live blocked IP addresses and automatically synthesized CLI mitigation scripts</p>
+                    <h2>🛡️ Active Firewall Quarantine &amp; Rule Synthesizer</h2>
+                    <p>Live blocked threat actors, automated ingress drop enforcement &amp; cross-platform CLI firewall rules</p>
                 </div>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="manualBlockIp" placeholder="Add IP to quarantine..." style="padding: 6px 12px; background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; color: #f8fafc; font-size: 12px;">
-                    <button onclick="addManualQuarantine()" class="btn-sm" style="background: #dc2626; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer;">
-                        + Quarantine
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    <input type="text" id="manualBlockIp" placeholder="Target IP (e.g. 198.51.100.4)..." style="padding: 7px 12px; background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; color: #f8fafc; font-size: 12px; font-family: monospace;">
+                    <select id="manualBlockVector" style="padding: 7px 10px; background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; color: #cbd5e1; font-size: 12px;">
+                        <option value="SSH Brute Force Spray">SSH Brute Force</option>
+                        <option value="Layer 7 HTTP DDoS">Layer 7 DDoS</option>
+                        <option value="Data Exfiltration via Tor">Tor Exfiltration</option>
+                        <option value="Port Reconnaissance Scan">Port Recon Probe</option>
+                        <option value="Manual Admin Quarantine">Manual Quarantine</option>
+                    </select>
+                    <button onclick="addManualQuarantine()" class="btn-sm" style="background: #dc2626; color: white; border: none; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                        + Quarantine Host
                     </button>
                 </div>
             </div>
 
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; margin-bottom: 25px;">
-                <thead>
-                    <tr style="border-bottom: 1px solid #1a2744; color: #64748b;">
-                        <th style="padding: 10px;">QUARANTINED IP</th>
-                        <th style="padding: 10px;">ORIGIN NATION</th>
-                        <th style="padding: 10px;">PRIMARY THREAT VECTOR</th>
-                        <th style="padding: 10px;">TIMESTAMP</th>
-                        <th style="padding: 10px;">ACTIONS</th>
-                    </tr>
-                </thead>
-                <tbody id="firewallTableBody">
-                    <!-- Dynamically rendered rows -->
-                </tbody>
-            </table>
+            <!-- QUARANTINED HOSTS TABLE -->
+            <div style="overflow-x: auto; margin-bottom: 25px;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #1a2744; color: #64748b; background: #070d1a;">
+                            <th style="padding: 12px 10px;">QUARANTINED IP</th>
+                            <th style="padding: 12px 10px;">ORIGIN NATION</th>
+                            <th style="padding: 12px 10px;">PRIMARY THREAT VECTOR</th>
+                            <th style="padding: 12px 10px;">ENFORCEMENT POLICY</th>
+                            <th style="padding: 12px 10px;">TIMESTAMP</th>
+                            <th style="padding: 12px 10px; text-align: right;">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="firewallTableBody">
+                        <!-- Dynamically rendered rows -->
+                    </tbody>
+                </table>
+            </div>
 
-            <div style="background: #070d1a; border: 1px solid #1a2744; border-radius: 8px; padding: 15px;">
-                <h3 style="font-size: 13px; color: #38bdf8; margin-bottom: 8px;">💻 Generated Ingress Drop Rules</h3>
-                <pre id="firewallCliRules" style="background: #030712; padding: 12px; border-radius: 6px; color: #38bdf8; font-size: 11px; overflow-x: auto;">
-# Linux iptables Drop Rule
+            <!-- CROSS-PLATFORM CLI FIREWALL SYNTHESIZER -->
+            <div style="background: #070d1a; border: 1px solid #1a2744; border-radius: 8px; padding: 18px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="font-size: 14px; color: #38bdf8;">💻 Synthesized Enterprise Firewall Rules</h3>
+                        <p style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Deploy these rules directly to boundary firewalls to block all active quarantined threat actors</p>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button onclick="selectFirewallPlatform('iptables')" id="btnFwIptables" class="btn-sm" style="background: #0284c7; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;">
+                            Linux iptables
+                        </button>
+                        <button onclick="selectFirewallPlatform('netsh')" id="btnFwNetsh" class="btn-sm" style="background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                            Windows Defender
+                        </button>
+                        <button onclick="selectFirewallPlatform('cisco')" id="btnFwCisco" class="btn-sm" style="background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                            Cisco IOS ACL
+                        </button>
+                        <button onclick="selectFirewallPlatform('cloudflare')" id="btnFwCloudflare" class="btn-sm" style="background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                            Cloudflare WAF
+                        </button>
+                        <button onclick="copyFirewallRules()" class="btn-sm" style="background: #10b981; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;">
+                            📋 Copy Rules
+                        </button>
+                    </div>
+                </div>
+                <pre id="firewallCliRules" style="background: #030712; padding: 14px; border-radius: 6px; color: #38bdf8; font-size: 11px; overflow-x: auto; line-height: 1.6; border: 1px solid #111e38; font-family: monospace;">
+# Linux iptables Drop Rules (Auto-synthesized for quarantined hosts)
 sudo iptables -A INPUT -s 192.168.1.52 -j DROP
-
-# Windows Defender Firewall netsh Rule
-netsh advfirewall firewall add rule name="SentinelX_Quarantine_192.168.1.52" dir=in action=block remoteip=192.168.1.52
-
-# Cisco IOS Extended ACL
-access-list 101 deny ip host 192.168.1.52 any</pre>
+sudo iptables -A INPUT -s 45.154.255.88 -j DROP
+sudo iptables -A INPUT -s 185.220.101.5 -j DROP
+sudo iptables -A INPUT -s 103.203.57.18 -j DROP</pre>
             </div>
         </section>
     </div>
@@ -1018,39 +1239,57 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
     <!-- ========================================== -->
     <div id="logs-tab" class="tab-content">
         <section class="panel">
-            <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <h2>📋 Security Telemetry Ingress Stream</h2>
-                    <p>Real-time event registry with Machine Learning anomaly classification tags</p>
+                    <p>Real-time event registry with Machine Learning classification tags &amp; 1-click incident containment</p>
                 </div>
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    <input type="text" id="searchLogsInput" oninput="filterLogsTable()" placeholder="🔍 Search IP, vector or keyword..." style="background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; color: #f8fafc; padding: 6px 12px; font-size: 12px; font-family: monospace;">
                     <select id="logFilterLevel" onchange="filterLogsTable()" style="background: #070d1a; border: 1px solid #1a2744; border-radius: 6px; color: #f8fafc; padding: 6px 12px; font-size: 12px;">
                         <option value="ALL">All Threat Levels</option>
                         <option value="CRITICAL">Critical Threats Only</option>
                         <option value="HIGH">High Threats Only</option>
-                        <option value="NORMAL">Normal Traffic</option>
+                        <option value="MEDIUM">Medium Recon Only</option>
+                        <option value="NORMAL">Normal Safe Only</option>
                     </select>
-                    <button onclick="downloadLogsCsv()" class="btn-sm" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
+                    <button id="btnToggleLiveLogs" onclick="toggleLiveLogs()" class="btn-sm" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                        🟢 Live Stream: ON
+                    </button>
+                    <button onclick="downloadLogsCsv()" class="btn-sm" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">
                         📥 Export CSV
+                    </button>
+                    <button onclick="clearIngressLogs()" class="btn-sm" style="background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; cursor: pointer;">
+                        🗑️ Clear
                     </button>
                 </div>
             </div>
 
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
-                <thead>
-                    <tr style="border-bottom: 1px solid #1a2744; color: #64748b;">
-                        <th style="padding: 10px;">TIMESTAMP</th>
-                        <th style="padding: 10px;">SOURCE IP</th>
-                        <th style="padding: 10px;">FAILED LOGINS</th>
-                        <th style="padding: 10px;">REQUESTS</th>
-                        <th style="padding: 10px;">NETWORK (KB/s)</th>
-                        <th style="padding: 10px;">AI VERDICT</th>
-                    </tr>
-                </thead>
-                <tbody id="securityLogsTableBody">
-                    <!-- Dynamically populated rows -->
-                </tbody>
-            </table>
+            <!-- LOGS MATCH COUNTER -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 11px; color: #64748b;">
+                <span id="logsCounterText">Showing all security ingress telemetry events</span>
+                <span style="color: #38bdf8;">● Ingress Sensor: Active Ashburn Core</span>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #1a2744; color: #64748b; background: #070d1a;">
+                            <th style="padding: 10px;">TIMESTAMP</th>
+                            <th style="padding: 10px;">SOURCE IP</th>
+                            <th style="padding: 10px;">ORIGIN / VECTOR</th>
+                            <th style="padding: 10px;">FAILURES</th>
+                            <th style="padding: 10px;">REQ/MIN</th>
+                            <th style="padding: 10px;">TRAFFIC</th>
+                            <th style="padding: 10px;">AI VERDICT</th>
+                            <th style="padding: 10px; text-align: right;">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="securityLogsTableBody">
+                        <!-- Dynamically populated rows -->
+                    </tbody>
+                </table>
+            </div>
         </section>
     </div>
 
@@ -1620,16 +1859,31 @@ access-list 101 deny ip host 192.168.1.52 any</pre>
         document.getElementById('resultMitre').innerText = res.mitre;
         document.getElementById('resultGeo').innerText = `${intel.flag} ${intel.city}, ${intel.country} (${intel.isp})`;
 
+        // Update Explainable AI (XAI) feature contribution breakdown
+        const fFail = Math.min(failed * 4, 40);
+        const fReq = Math.min(req * 0.08, 30);
+        const fHour = hour ? 15 : 0;
+        const fNet = Math.min(net * 0.02, 15);
+        const fTotal = Math.max(fFail + fReq + fHour + fNet, 1);
+
+        const pctFail = Math.round((fFail / fTotal) * 100);
+        const pctReq = Math.round((fReq / fTotal) * 100);
+        const pctHour = Math.round((fHour / fTotal) * 100);
+        const pctNet = Math.round((fNet / fTotal) * 100);
+
+        if (document.getElementById('xaiFailedPct')) {
+            document.getElementById('xaiFailedPct').innerText = `+${pctFail}%`;
+            document.getElementById('xaiFailedBar').style.width = `${pctFail}%`;
+            document.getElementById('xaiReqPct').innerText = `+${pctReq}%`;
+            document.getElementById('xaiReqBar').style.width = `${pctReq}%`;
+            document.getElementById('xaiHourPct').innerText = `+${pctHour}%`;
+            document.getElementById('xaiHourBar').style.width = `${pctHour}%`;
+            document.getElementById('xaiNetPct').innerText = `+${pctNet}%`;
+            document.getElementById('xaiNetBar').style.width = `${pctNet}%`;
+        }
+
         // Update pre-generated firewall rule
-        document.getElementById('firewallCliRules').innerText = 
-`# Linux iptables Drop Rule
-sudo iptables -A INPUT -s ${ip} -j DROP
-
-# Windows Defender Firewall netsh Rule
-netsh advfirewall firewall add rule name="SentinelX_Quarantine_${ip}" dir=in action=block remoteip=${ip}
-
-# Cisco IOS Extended ACL
-access-list 101 deny ip host ${ip} any`;
+        updateFirewallCliRules();
     }
 
     function loadSamplePreset(preset) {
@@ -1639,8 +1893,246 @@ access-list 101 deny ip host ${ip} any`;
             document.getElementById('inputRequests').value = "380";
             document.getElementById('inputHour').value = "1";
             document.getElementById('inputActivity').value = "840";
+        } else if (preset === 'ddos') {
+            document.getElementById('inputIp').value = "45.154.255.88";
+            document.getElementById('inputFailed').value = "0";
+            document.getElementById('inputRequests').value = "2850";
+            document.getElementById('inputHour').value = "0";
+            document.getElementById('inputActivity').value = "18400";
+        } else if (preset === 'exfiltration') {
+            document.getElementById('inputIp').value = "185.220.101.5";
+            document.getElementById('inputFailed').value = "3";
+            document.getElementById('inputRequests').value = "45";
+            document.getElementById('inputHour').value = "1";
+            document.getElementById('inputActivity').value = "45200";
+        } else if (preset === 'recon') {
+            document.getElementById('inputIp').value = "103.203.57.18";
+            document.getElementById('inputFailed').value = "4";
+            document.getElementById('inputRequests').value = "180";
+            document.getElementById('inputHour').value = "0";
+            document.getElementById('inputActivity').value = "65";
+        } else if (preset === 'normal') {
+            document.getElementById('inputIp').value = "10.0.4.15";
+            document.getElementById('inputFailed').value = "0";
+            document.getElementById('inputRequests').value = "14";
+            document.getElementById('inputHour').value = "0";
+            document.getElementById('inputActivity').value = "110";
         }
         runThreatAnalysis(new Event('submit'));
+        showToast(`Loaded ${preset.toUpperCase()} preset parameters into AI Detector.`);
+    }
+
+    // --- MITRE ATT&CK ENTERPRISE KNOWLEDGE BASE & HANDLERS ---
+    let currentSelectedMitreId = 'T1110.001';
+    const MITRE_DATABASE = {
+        'T1110.001': {
+            id: 'T1110.001', name: 'Password Spraying / SSH Brute Force',
+            tactic: 'CREDENTIAL ACCESS (TA0006)', severity: 'CRITICAL', badge: 'high',
+            desc: 'Adversaries may use password spraying techniques to authenticate across numerous accounts using a small list of commonly used passwords to avoid account lockouts.',
+            sigma: 'Detect EventID=4625 (Logon Failure) WHERE count(TargetUserName) > 5 AND src_ip = anomalous within 60s',
+            actors: '• APT28 (Fancy Bear)\n• Lazarus Group\n• APT29 (Cozy Bear)',
+            containment: '1. Ingress DROP on source IP via firewall\n2. Invalidate active user tokens\n3. Enforce Step-Up MFA'
+        },
+        'T1190': {
+            id: 'T1190', name: 'Exploit Public-Facing Application',
+            tactic: 'INITIAL ACCESS (TA0001)', severity: 'HIGH', badge: 'med',
+            desc: 'Adversaries may attempt to take advantage of software vulnerabilities in Internet-facing hosts to gain initial code execution.',
+            sigma: 'Web Server 500 error spikes + SQL injection/RCE signature tokens in HTTP payload',
+            actors: '• FIN7\n• Sandworm Team\n• Volt Typhoon',
+            containment: '1. Engage WAF virtual patch\n2. Rate-limit source subnet\n3. Patch target software binary'
+        },
+        'T1059.001': {
+            id: 'T1059.001', name: 'PowerShell Command & Scripting',
+            tactic: 'EXECUTION (TA0002)', severity: 'HIGH', badge: 'high',
+            desc: 'Adversaries may abuse PowerShell to execute arbitrary shellcode, download memory-only stages, and bypass disk-based anti-virus.',
+            sigma: 'Event ID 4104 (ScriptBlock Logging) with EncodedCommand or DownloadString invocations',
+            actors: '• Emotet\n• MuddyWater\n• Cobalt Strike Operators',
+            containment: '1. Terminate spawned PowerShell child processes\n2. Enforce PowerShell Constrained Language Mode'
+        },
+        'T1204.002': {
+            id: 'T1204.002', name: 'Malicious File Execution',
+            tactic: 'EXECUTION (TA0002)', severity: 'LOW', badge: 'low',
+            desc: 'An adversary may rely on an enterprise user opening an attachment or macro to execute weaponized payloads.',
+            sigma: 'Office process spawning CMD.exe or WScript.exe from user AppData path',
+            actors: '• QakBot\n• RedLine Stealer',
+            containment: '1. Kill user process tree\n2. Quarantine attachment hash in Mail Gateway'
+        },
+        'T1003': {
+            id: 'T1003', name: 'OS Credential Dumping',
+            tactic: 'CREDENTIAL ACCESS (TA0006)', severity: 'CRITICAL', badge: 'low',
+            desc: 'Adversaries may attempt to dump credentials from the LSASS process or SAM database to acquire plaintext credentials or Kerberos tickets.',
+            sigma: 'Sysmon Event 10: ProcessAccess requesting PROCESS_VM_READ against lsass.exe',
+            actors: '• Mimikatz\n• Conti Ransomware\n• Dragonfly',
+            containment: '1. Enable LSA Protection (RunAsPPL)\n2. Reset enterprise Kerberos KRBTGT account password'
+        },
+        'T1078': {
+            id: 'T1078', name: 'Valid Accounts Baseline',
+            tactic: 'DEFENSE EVASION (TA0005)', severity: 'LOW', badge: 'low',
+            desc: 'Adversaries may compromise credentials of existing legitimate accounts to blend into normal administrative workflows.',
+            sigma: 'UEBA anomaly detection: Login from impossible geographical travel distance or anomalous user hours',
+            actors: '• APT33\n• Turla Group',
+            containment: '1. Baseline verification\n2. Continuous behavioral auditing\n3. Conditional access MFA'
+        },
+        'T1046': {
+            id: 'T1046', name: 'Network Service Scanning',
+            tactic: 'DISCOVERY (TA0007)', severity: 'MEDIUM', badge: 'med',
+            desc: 'Adversaries may attempt to get a listing of services running on remote hosts to discover attack surface and unpatched ports.',
+            sigma: 'Network IDS rule: Alert on TCP SYN scanning across ports 22, 80, 443, 3389, and 8080 from non-whitelisted IPs',
+            actors: '• FIN7\n• Sandworm\n• Wizard Spider',
+            containment: '1. Rate-limit and isolate external probing IP\n2. Verify perimeter firewall configurations'
+        },
+        'T1021.001': {
+            id: 'T1021.001', name: 'Remote Desktop Protocol (RDP)',
+            tactic: 'LATERAL MOVEMENT (TA0008)', severity: 'HIGH', badge: 'med',
+            desc: 'Adversaries may log into remote systems using RDP to expand their foothold and move laterally across internal subnets.',
+            sigma: 'Event ID 4624 (Logon Type 10): Multiple incoming RDP sessions between internal client machines',
+            actors: '• FIN6\n• Ryuk Ransomware',
+            containment: '1. Block TCP/3389 at internal firewalls\n2. Require Network Level Authentication (NLA)'
+        },
+        'T1562.001': {
+            id: 'T1562.001', name: 'Impair Defenses: Disable Tools',
+            tactic: 'DEFENSE EVASION (TA0005)', severity: 'CRITICAL', badge: 'high',
+            desc: 'Adversaries may disable security software, stop EDR services, or delete event logs to avoid detection.',
+            sigma: 'Service Control Manager Event 7036 (Windows Defender / CrowdStrike service stopped unexpectedly)',
+            actors: '• BlackByte Ransomware\n• LockBit 3.0',
+            containment: '1. EDR tamper protection enforcement\n2. Immediate network isolation of host endpoint'
+        },
+        'T1070': {
+            id: 'T1070', name: 'Indicator Removal on Host: Log Wiping',
+            tactic: 'DEFENSE EVASION (TA0005)', severity: 'LOW', badge: 'low',
+            desc: 'Adversaries may delete system event logs (`wevtutil cl System`) to clean up forensic evidence of intrusion.',
+            sigma: 'Event ID 1102 (The audit log was cleared) / wevtutil.exe commandline usage',
+            actors: '• DarkSide\n• BlackCat',
+            containment: '1. Centralized immutable SIEM log forwarding verification\n2. Isolate host workstation'
+        },
+        'T1498.001': {
+            id: 'T1498.001', name: 'Direct Network Flood DDoS',
+            tactic: 'IMPACT (TA0040)', severity: 'CRITICAL', badge: 'high',
+            desc: 'Adversaries may direct high volumes of network traffic to overwhelm server capacity and deny service to legitimate users.',
+            sigma: 'Inbound request rate exceeding 1,000 req/min or edge bandwidth consumption > 15 MB/s',
+            actors: '• Mirai Botnet\n• Killnet\n• Anonymous Sudan',
+            containment: '1. Activate Cloudflare WAF Under Attack Mode\n2. Push BGP Blackhole / Rate-Limiting ACL'
+        },
+        'T1048.003': {
+            id: 'T1048.003', name: 'Exfiltration Over Tor Relay',
+            tactic: 'EXFILTRATION (TA0010)', severity: 'HIGH', badge: 'high',
+            desc: 'Adversaries may steal sensitive enterprise data by encrypting and routing outbound transmissions through the Tor network.',
+            sigma: 'Bro/Zeek IDS rule: Outbound TCP/443 & TCP/9001 destinations matching known live Tor Exit Node IPs',
+            actors: '• LockBit Ransomware\n• ALPHV / BlackCat',
+            containment: '1. Immediate TCP Session Reset (RST)\n2. Quarantine workstation network interface\n3. Forensics dump'
+        }
+    };
+
+    function selectMitreTechnique(id) {
+        if (!MITRE_DATABASE[id]) return;
+        currentSelectedMitreId = id;
+        const t = MITRE_DATABASE[id];
+        document.getElementById('inspTechTactic').innerText = t.tactic;
+        document.getElementById('inspTechTitle').innerText = `${t.id} — ${t.name}`;
+        document.getElementById('inspTechBadge').innerText = `${t.severity} // ${t.badge === 'high' ? 'DETECTED' : (t.badge === 'med' ? 'INVESTIGATING' : 'BASELINE')}`;
+        document.getElementById('inspTechBadge').className = `badge ${t.badge}`;
+        document.getElementById('inspTechDesc').innerText = t.desc;
+        document.getElementById('inspTechSigma').innerText = t.sigma;
+        document.getElementById('inspTechActors').innerHTML = t.actors.replace(/\n/g, '<br>');
+        showToast(`Selected MITRE Technique: ${t.id} (${t.name})`);
+    }
+
+    function openMitreTechniqueModal(id) {
+        const t = MITRE_DATABASE[id] || MITRE_DATABASE['T1110.001'];
+        const html = `
+            <div class="report-modal-header">
+                <div>
+                    <div style="font-size: 11px; color: #38bdf8; font-weight: bold; letter-spacing: 1.5px;">MITRE ATT&amp;CK® ENTERPRISE DOSSIER</div>
+                    <h1 style="font-size: 22px; color: #f8fafc; margin: 4px 0;">🎯 ${t.id} — ${t.name}</h1>
+                    <p style="font-size: 12px; color: #94a3b8; margin: 0;">Tactic: ${t.tactic} • Severity: ${t.severity}</p>
+                </div>
+                <div style="text-align: right;">
+                    <span class="badge ${t.badge}" style="font-size: 12px; padding: 6px 14px;">${t.severity} THREAT</span>
+                </div>
+            </div>
+            <div class="report-section-box">
+                <h3 style="font-size: 13px; color: #38bdf8; margin-bottom: 6px;">📖 Threat Description</h3>
+                <p style="font-size: 12px; color: #cbd5e1; line-height: 1.6;">${t.desc}</p>
+            </div>
+            <div class="report-section-box">
+                <h3 style="font-size: 13px; color: #10b981; margin-bottom: 6px;">🔍 SIEM Detection Signature (Sigma Rule)</h3>
+                <pre style="background: #040814; padding: 10px; border-radius: 6px; color: #10b981; font-size: 11px; line-height: 1.5; font-family: monospace; overflow-x: auto;">${t.sigma}</pre>
+            </div>
+            <div class="report-section-box">
+                <h3 style="font-size: 13px; color: #ef4444; margin-bottom: 6px;">🛡️ Automated Defensive Containment Playbook</h3>
+                <pre style="background: #040814; padding: 10px; border-radius: 6px; color: #ef4444; font-size: 11px; line-height: 1.5; font-family: monospace; overflow-x: auto;">${t.containment}</pre>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button onclick="simulateMitreTechnique('${t.id}'); closeReportModal();" class="btn" style="background: #dc2626; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                    ⚡ Inject Attack Simulation
+                </button>
+                <button onclick="closeReportModal()" class="btn btn-close-modal" style="background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                    Close
+                </button>
+            </div>
+        `;
+        openReportModal(html);
+    }
+
+    function simulateMitreTechnique(id) {
+        if (id === 'T1110.001') loadSamplePreset('bruteforce');
+        else if (id === 'T1498.001') loadSamplePreset('ddos');
+        else if (id === 'T1048.003') loadSamplePreset('exfiltration');
+        else if (id === 'T1046') loadSamplePreset('recon');
+        else loadSamplePreset('bruteforce');
+        switchTab('ai-detector');
+        showToast(`Injected telemetry vector for MITRE technique: ${id}`);
+    }
+
+    // --- LIVE MAP INTERACTION CONTROLLERS ---
+    let isMapStreamActive = true;
+    let mapAttackCount = 1842;
+
+    function toggleMapStream() {
+        isMapStreamActive = !isMapStreamActive;
+        const btn = document.getElementById('btnToggleMapStream');
+        if (btn) {
+            btn.innerText = isMapStreamActive ? "⏸️ Pause Stream" : "▶️ Resume Stream";
+            btn.style.color = isMapStreamActive ? "#38bdf8" : "#f59e0b";
+        }
+        showToast(isMapStreamActive ? "Live Map attack telemetry stream resumed." : "Live Map attack telemetry stream paused.");
+    }
+
+    function triggerThreatSurge() {
+        mapAttackCount += 25;
+        const countEl = document.getElementById('mapCounterDetected');
+        if (countEl) countEl.innerText = mapAttackCount.toLocaleString();
+        
+        // Spawn extra sparks
+        for (let i = 0; i < 5; i++) {
+            sparks.push({
+                actorIndex: Math.floor(Math.random() * threatActors.length),
+                progress: 0,
+                speed: 0.015 + Math.random() * 0.01
+            });
+        }
+        
+        // Push urgent logs into wallboard
+        const wallLog = document.getElementById('wallboardLogStream');
+        if (wallLog) {
+            const urgentEntry = document.createElement('div');
+            urgentEntry.innerHTML = `<span style="color:#ef4444; font-weight:bold;">${new Date().toLocaleTimeString()} [SURGE_ALERT]</span> Volumetric attack wave injected! Edge firewall filtering engaged.`;
+            wallLog.prepend(urgentEntry);
+        }
+        showToast("⚡ THREAT SURGE INJECTED: 5 High-velocity vectors launched!");
+    }
+
+    function focusSocDatacenter() {
+        if (wallboardMap) {
+            wallboardMap.flyTo([targetHub.lat, targetHub.lng], 5, { duration: 1.5 });
+            showToast("🎯 Camera focused on Ashburn SOC Gateway.");
+        }
+    }
+
+    function clearWallboardLogs() {
+        const wallLog = document.getElementById('wallboardLogStream');
+        if (wallLog) wallLog.innerHTML = "";
+        showToast("Live intercept log buffer cleared.");
     }
 
     // --- SOAR WORKFLOW CONTROLLER ---
@@ -1883,7 +2375,65 @@ access-list 101 deny ip host ${ip} any`;
         }, 600);
     }
 
-    // --- FIREWALL & LOG TABLES ---
+    // --- FIREWALL & CROSS-PLATFORM CLI RULE SYNTHESIZER ---
+    let currentFirewallPlatform = 'iptables';
+
+    function selectFirewallPlatform(plat) {
+        currentFirewallPlatform = plat;
+        ['iptables', 'netsh', 'cisco', 'cloudflare'].forEach(p => {
+            const btn = document.getElementById(`btnFw${p.charAt(0).toUpperCase() + p.slice(1)}`);
+            if (btn) {
+                if (p === plat) {
+                    btn.style.background = "#0284c7";
+                    btn.style.color = "white";
+                    btn.style.fontWeight = "bold";
+                } else {
+                    btn.style.background = "#1e293b";
+                    btn.style.color = "#cbd5e1";
+                    btn.style.fontWeight = "normal";
+                }
+            }
+        });
+        updateFirewallCliRules();
+    }
+
+    function updateFirewallCliRules() {
+        const pre = document.getElementById('firewallCliRules');
+        if (!pre) return;
+        if (currentFirewallPlatform === 'iptables') {
+            pre.innerText = `# Linux iptables Drop Rules (Auto-synthesized for quarantined hosts)\n` +
+                blockedIps.map(ip => `sudo iptables -A INPUT -s ${ip} -j DROP`).join('\n');
+        } else if (currentFirewallPlatform === 'netsh') {
+            pre.innerText = `# Windows Defender Firewall netsh Rules\n` +
+                blockedIps.map(ip => `netsh advfirewall firewall add rule name="SentinelX_Block_${ip}" dir=in action=block remoteip=${ip}`).join('\n');
+        } else if (currentFirewallPlatform === 'cisco') {
+            pre.innerText = `! Cisco IOS Extended ACL Rules\n` +
+                blockedIps.map((ip, idx) => `access-list 101 deny ip host ${ip} any`).join('\n') +
+                `\naccess-list 101 permit ip any any`;
+        } else if (currentFirewallPlatform === 'cloudflare') {
+            pre.innerText = `// Cloudflare WAF Custom Firewall Rule (JSON Expression)\n` +
+                `{\n  "action": "block",\n  "expression": "${blockedIps.map(ip => `(ip.src eq ${ip})`).join(' or ')}"\n}`;
+        }
+    }
+
+    function copyFirewallRules() {
+        const pre = document.getElementById('firewallCliRules');
+        if (pre && navigator.clipboard) {
+            navigator.clipboard.writeText(pre.innerText).then(() => {
+                showToast("📋 Firewall rules copied to clipboard!");
+            });
+        }
+    }
+
+    function copySingleIpRule(ip) {
+        const rule = `sudo iptables -A INPUT -s ${ip} -j DROP`;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(rule).then(() => {
+                showToast(`📋 Copied iptables rule for ${ip}`);
+            });
+        }
+    }
+
     function renderFirewallTable() {
         const tbody = document.getElementById('firewallTableBody');
         if (!tbody) return;
@@ -1893,16 +2443,20 @@ access-list 101 deny ip host ${ip} any`;
             const tr = document.createElement('tr');
             tr.style.borderBottom = "1px solid #111e38";
             tr.innerHTML = `
-                <td style="padding: 10px; font-family: monospace; color: #ef4444; font-weight: bold;">${ip}</td>
-                <td style="padding: 10px;">${intel.flag} ${intel.country}</td>
-                <td style="padding: 10px;">${intel.vector}</td>
-                <td style="padding: 10px; color: #64748b;">ACTIVE QUARANTINE</td>
-                <td style="padding: 10px; display: flex; gap: 8px;">
+                <td style="padding: 12px 10px; font-family: monospace; color: #ef4444; font-weight: bold;">${ip}</td>
+                <td style="padding: 12px 10px;">${intel.flag} ${intel.country}</td>
+                <td style="padding: 12px 10px;">${intel.vector}</td>
+                <td style="padding: 12px 10px;"><span class="badge high" style="font-size: 10px;">INBOUND DROP</span></td>
+                <td style="padding: 12px 10px; color: #64748b; font-family: monospace; font-size: 11px;">${new Date().toLocaleTimeString()}</td>
+                <td style="padding: 12px 10px; text-align: right; display: flex; justify-content: flex-end; gap: 6px;">
                     <button onclick="generateSingleHostReport('${ip}')" class="btn-sm" style="background: #0284c7; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
                         📄 Report
                     </button>
+                    <button onclick="copySingleIpRule('${ip}')" class="btn-sm" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
+                        📋 Rule
+                    </button>
                     <button onclick="unblockIp('${ip}')" class="btn-sm" style="background: #1e293b; color: #10b981; border: 1px solid #10b981; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
-                        Unblock
+                        🟢 Unblock
                     </button>
                 </td>
             `;
@@ -1910,15 +2464,28 @@ access-list 101 deny ip host ${ip} any`;
         });
         const kpi = document.getElementById('kpiBlockedCount');
         if (kpi) kpi.innerText = blockedIps.length + " HOSTS";
+        const mapKpi = document.getElementById('mapCounterQuarantined');
+        if (mapKpi) mapKpi.innerText = blockedIps.length + " HOSTS";
+        updateFirewallCliRules();
     }
 
     function addManualQuarantine() {
-        const ip = document.getElementById('manualBlockIp').value.trim();
-        if (ip && !blockedIps.includes(ip)) {
-            blockedIps.push(ip);
+        const ipInput = document.getElementById('manualBlockIp');
+        const vectorSelect = document.getElementById('manualBlockVector');
+        const ip = ipInput ? ipInput.value.trim() : "";
+
+        if (!ip) {
+            showToast("⚠️ Please enter a valid target IP address!");
+            return;
+        }
+
+        if (!blockedIps.includes(ip)) {
+            blockedIps.unshift(ip);
             renderFirewallTable();
-            document.getElementById('manualBlockIp').value = "";
-            showToast(`Host ${ip} has been added to Quarantine!`);
+            ipInput.value = "";
+            showToast(`Host ${ip} has been added to Active Firewall Quarantine!`);
+        } else {
+            showToast(`Host ${ip} is already quarantined in firewall!`);
         }
     }
 
@@ -1928,45 +2495,98 @@ access-list 101 deny ip host ${ip} any`;
         showToast(`Quarantine lifted for host: ${ip}`);
     }
 
-    function renderLogsTable() {
+    // --- SECURITY INGRESS LOGS CONTROLLERS ---
+    let isLiveLogsActive = true;
+
+    function renderLogsTable(logsToRender) {
+        const logs = logsToRender || threatLogs;
         const tbody = document.getElementById('securityLogsTableBody');
         if (!tbody) return;
         tbody.innerHTML = "";
-        threatLogs.forEach(log => {
+
+        logs.forEach(log => {
             const tr = document.createElement('tr');
             tr.style.borderBottom = "1px solid #111e38";
             const badgeClass = log.verdict === "CRITICAL" ? "high" : (log.verdict === "HIGH" ? "high" : (log.verdict === "MEDIUM" ? "med" : "low"));
+            const intel = getIpIntel(log.ip);
+
             tr.innerHTML = `
-                <td style="padding: 10px; font-family: monospace; color: #64748b;">${log.time}</td>
-                <td style="padding: 10px; font-family: monospace; color: #38bdf8;">${log.ip}</td>
-                <td style="padding: 10px;">${log.failed}</td>
+                <td style="padding: 10px; font-family: monospace; color: #64748b; font-size: 11px;">${log.time}</td>
+                <td style="padding: 10px; font-family: monospace; color: #38bdf8; font-weight: 600;">${log.ip}</td>
+                <td style="padding: 10px; font-size: 12px;">${intel.flag} ${log.vector}</td>
+                <td style="padding: 10px; color: ${log.failed > 5 ? '#ef4444' : '#cbd5e1'}; font-weight: ${log.failed > 5 ? 'bold' : 'normal'};">${log.failed}</td>
                 <td style="padding: 10px;">${log.req}</td>
-                <td style="padding: 10px;">${log.net} KB/s</td>
+                <td style="padding: 10px; color: #94a3b8;">${log.net} KB/s</td>
                 <td style="padding: 10px;"><span class="badge ${badgeClass}">${log.verdict}</span></td>
+                <td style="padding: 10px; text-align: right; display: flex; justify-content: flex-end; gap: 6px;">
+                    <button onclick="quarantineLogIp('${log.ip}', '${log.vector}')" class="btn-sm" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; padding: 3px 7px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold;">
+                        🛡️ Block
+                    </button>
+                    <button onclick="inspectLogIp('${log.ip}', ${log.failed}, ${log.req}, ${log.hour}, ${log.net})" class="btn-sm" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 3px 7px; border-radius: 4px; cursor: pointer; font-size: 10px;">
+                        🔍 Inspect
+                    </button>
+                    <button onclick="generateSingleHostReport('${log.ip}')" class="btn-sm" style="background: #0284c7; color: white; border: none; padding: 3px 7px; border-radius: 4px; cursor: pointer; font-size: 10px;">
+                        📄 Report
+                    </button>
+                </td>
             `;
             tbody.appendChild(tr);
         });
+
+        const counter = document.getElementById('logsCounterText');
+        if (counter) counter.innerText = `Showing ${logs.length} security ingress telemetry events`;
     }
 
     function filterLogsTable() {
-        const filter = document.getElementById('logFilterLevel').value;
-        const tbody = document.getElementById('securityLogsTableBody');
-        if (!tbody) return;
-        tbody.innerHTML = "";
-        threatLogs.filter(log => filter === "ALL" || log.verdict === filter).forEach(log => {
-            const tr = document.createElement('tr');
-            tr.style.borderBottom = "1px solid #111e38";
-            const badgeClass = log.verdict === "CRITICAL" ? "high" : (log.verdict === "HIGH" ? "high" : (log.verdict === "MEDIUM" ? "med" : "low"));
-            tr.innerHTML = `
-                <td style="padding: 10px; font-family: monospace; color: #64748b;">${log.time}</td>
-                <td style="padding: 10px; font-family: monospace; color: #38bdf8;">${log.ip}</td>
-                <td style="padding: 10px;">${log.failed}</td>
-                <td style="padding: 10px;">${log.req}</td>
-                <td style="padding: 10px;">${log.net} KB/s</td>
-                <td style="padding: 10px;"><span class="badge ${badgeClass}">${log.verdict}</span></td>
-            `;
-            tbody.appendChild(tr);
+        const filter = document.getElementById('logFilterLevel') ? document.getElementById('logFilterLevel').value : "ALL";
+        const searchInput = document.getElementById('searchLogsInput');
+        const term = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
+        const filtered = threatLogs.filter(log => {
+            const matchesLevel = (filter === "ALL" || log.verdict === filter);
+            const matchesSearch = !term || log.ip.toLowerCase().includes(term) || log.vector.toLowerCase().includes(term) || log.verdict.toLowerCase().includes(term);
+            return matchesLevel && matchesSearch;
         });
+
+        renderLogsTable(filtered);
+    }
+
+    function toggleLiveLogs() {
+        isLiveLogsActive = !isLiveLogsActive;
+        const btn = document.getElementById('btnToggleLiveLogs');
+        if (btn) {
+            btn.innerText = isLiveLogsActive ? "🟢 Live Stream: ON" : "⏸️ Live Stream: PAUSED";
+            btn.style.color = isLiveLogsActive ? "#10b981" : "#f59e0b";
+            btn.style.borderColor = isLiveLogsActive ? "#10b981" : "#f59e0b";
+        }
+        showToast(isLiveLogsActive ? "Live telemetry ingestion resumed." : "Live telemetry ingestion paused.");
+    }
+
+    function clearIngressLogs() {
+        threatLogs = [];
+        renderLogsTable();
+        showToast("Ingress security logs cleared.");
+    }
+
+    function quarantineLogIp(ip, vector) {
+        if (!blockedIps.includes(ip)) {
+            blockedIps.unshift(ip);
+            renderFirewallTable();
+            showToast(`🛡️ Host ${ip} quarantined in Active Firewall.`);
+        } else {
+            showToast(`Host ${ip} is already quarantined.`);
+        }
+    }
+
+    function inspectLogIp(ip, failed, req, hour, net) {
+        document.getElementById('inputIp').value = ip;
+        document.getElementById('inputFailed').value = failed;
+        document.getElementById('inputRequests').value = req;
+        document.getElementById('inputHour').value = hour;
+        document.getElementById('inputActivity').value = net;
+        switchTab('ai-detector');
+        runThreatAnalysis(new Event('submit'));
+        showToast(`🔍 Loaded telemetry for ${ip} into AI Threat Detector.`);
     }
 
     function downloadLogsCsv() {
@@ -2344,16 +2964,58 @@ netsh advfirewall firewall add rule name="SentinelX_Quarantine_${ip}" dir=in act
         // Wallboard Log Feed Stream
         const wallLog = document.getElementById('wallboardLogStream');
         setInterval(() => {
+            if (!isMapStreamActive) return;
             if (wallLog) {
                 const actor = threatActors[Math.floor(Math.random() * threatActors.length)];
+                mapAttackCount++;
+                const countEl = document.getElementById('mapCounterDetected');
+                if (countEl) countEl.innerText = mapAttackCount.toLocaleString();
+
                 const logEntry = document.createElement('div');
-                logEntry.innerHTML = `<span style="color:#64748b;">${new Date().toLocaleTimeString()}</span> <span style="color:${actor.color};">[${actor.vector}]</span> Ingress from ${actor.flag} ${actor.country}`;
+                logEntry.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; border-bottom: 1px solid #111e38;";
+                logEntry.innerHTML = `
+                    <div>
+                        <span style="color:#64748b;">${new Date().toLocaleTimeString()}</span> 
+                        <span style="color:${actor.color}; font-weight:bold;">[${actor.vector}]</span> 
+                        Ingress from ${actor.flag} ${actor.country}
+                    </div>
+                    <div style="display: flex; gap: 4px;">
+                        <button onclick="quarantineLogIp('198.51.100.${Math.floor(Math.random()*200)+2}', '${actor.vector}')" style="background: rgba(239,68,68,0.2); color:#ef4444; border:1px solid #ef4444; padding:2px 6px; border-radius:3px; font-size:9px; cursor:pointer;">Block</button>
+                    </div>
+                `;
                 wallLog.prepend(logEntry);
                 if (wallLog.children.length > 25) {
                     wallLog.removeChild(wallLog.lastChild);
                 }
             }
-        }, 1500);
+        }, 1600);
+
+        // Continuous Live Telemetry Generator into Security Logs
+        setInterval(() => {
+            if (!isLiveLogsActive) return;
+            const poolIps = [
+                { ip: "192.168.1.52", vector: "SSH_BRUTE_FORCE", failed: 14, req: 380, hour: 1, net: 840, verdict: "CRITICAL" },
+                { ip: "45.154.255.88", vector: "DDOS_FLOOD", failed: 0, req: 2450, hour: 0, net: 18200, verdict: "CRITICAL" },
+                { ip: "185.220.101.5", vector: "DATA_EXFILTRATION", failed: 3, req: 50, hour: 1, net: 48000, verdict: "HIGH" },
+                { ip: "103.203.57.18", vector: "PORT_RECON_SCAN", failed: 4, req: 190, hour: 0, net: 70, verdict: "MEDIUM" },
+                { ip: "10.0.4.15", vector: "NORMAL_AUTH", failed: 0, req: 16, hour: 0, net: 120, verdict: "NORMAL" },
+                { ip: "198.51.100.22", vector: "MALWARE_BEACON", failed: 6, req: 420, hour: 1, net: 1450, verdict: "HIGH" }
+            ];
+            const pick = poolIps[Math.floor(Math.random() * poolIps.length)];
+            const newLog = {
+                time: new Date().toLocaleTimeString(),
+                ip: pick.ip,
+                failed: pick.failed,
+                req: pick.req + Math.floor(Math.random() * 25),
+                hour: pick.hour,
+                net: pick.net + Math.floor(Math.random() * 60),
+                verdict: pick.verdict,
+                vector: pick.vector
+            };
+            threatLogs.unshift(newLog);
+            if (threatLogs.length > 50) threatLogs.pop();
+            filterLogsTable();
+        }, 3200);
     });
 </script>
 
