@@ -169,5 +169,14 @@ soc-threat-analysis/
 
 ---
 
+## 👨‍💻 Author & Lead Architect
+**Rounak Bera**  
+*Lead Cyber Defense Architect & SOC Security Engineer*  
+* **GitHub Profile**: [@rounakbera75](https://github.com/rounakbera75)  
+* **Project Repository**: [https://github.com/rounakbera75/soc-threat-analysis](https://github.com/rounakbera75/soc-threat-analysis)  
+* **Live Web Platform (24/7)**: [https://rounakbera75.github.io/soc-threat-analysis/](https://rounakbera75.github.io/soc-threat-analysis/)
+
+---
+
 ## 📜 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
